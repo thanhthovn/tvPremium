@@ -1,27 +1,48 @@
-#EXTM3U
-#EXTINF:-1 tvg-id="vtv1" tvg-name="VTV1" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv1.png" group-title="VTV",VTV1 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch1.m3u8
+﻿#EXTM3U
+#EXTINF:-1 tvg-name="VTV9",VTV9 (1920x1080 - 3426kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029317/vtv9/playlist.m3u8?hdnts=exp=1792742613~acl=/hls/live/2029317/vtv9/*~hmac=57ce977121938df70c0243c29fb1c618959d1ceb88919328e2aaaf2f38cd346a
 
-#EXTINF:-1 tvg-id="vtv2" tvg-name="VTV2" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv2.png" group-title="VTV",VTV2 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch2.m3u8
+#EXTINF:-1 tvg-name="VTV8",VTV8 (1920x1080 - 3386kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029316/vtv8/playlist.m3u8?hdnts=exp=1792742613~acl=/hls/live/2029316/vtv8/*~hmac=2088f70eaac62a19dfb4146b52cb17522714f8b98daac39ff30225c4406a1c83
 
-#EXTINF:-1 tvg-id="vtv3" tvg-name="VTV3" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv3.png" group-title="VTV",VTV3 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch3.m3u8
+#EXTINF:-1 tvg-name="VTV7",VTV7 (1920x1080 - 3321kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029315/vtv7/playlist.m3u8?hdnts=exp=1792742611~acl=/hls/live/2029315/vtv7/*~hmac=f26bff6d8f62af6fabd8e12f91b64196934ff2ab81519b1e22cda6af11f81968
 
-#EXTINF:-1 tvg-id="vtv4" tvg-name="VTV4" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv4.png" group-title="VTV",VTV4 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch4.m3u8
+#EXTINF:-1 tvg-name="Truyền hình Hà Nội 2",Truyền hình Hà Nội 2 (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/jpo2hT9uPZc7k40G8Y1piQ/1792742609/hls/HANOI2/index.m3u8
 
-#EXTINF:-1 tvg-id="vtv5" tvg-name="VTV5" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv5.png" group-title="VTV",VTV5 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch5.m3u8
+#EXTINF:-1 tvg-name="VTV6",VTV6 (854x480 - 949kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2125536/vtv6tt/playlist.m3u8?hdnts=exp=1792742608~acl=/hls/live/2125536/vtv6tt/*~hmac=557cf485e2fa3a1a90e00aa2d218d65ddc8f9720814f628401f8886137f3287c
 
-#EXTINF:-1 tvg-id="vtvcantho" tvg-name="VTV Cần Thơ" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv6.png" group-title="VTV",VTV Cần Thơ (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch13.m3u8
+#EXTINF:-1 tvg-name="VTV5 Tây Nam Bộ",VTV5 Tây Nam Bộ (1920x1080 - 3501kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792742607~acl=/hls/live/2029313/vtv5tnb/*~hmac=64cbd4652a6d5d05044c3b951b6cc9abaf73fbd9e7a0c0963220b4d5ca7a4859
 
-#EXTINF:-1 tvg-id="vtv7" tvg-name="VTV7" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv7.png" group-title="VTV",VTV7 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch7.m3u8
+#EXTINF:-1 tvg-name="VTV10",VTV10 (1920x1080 - 3298kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792742607~acl=/hls/live/2029314/vtv6/*~hmac=ad9da42043128690ff83e22433080166c40052fc19e2ded6c89b8aa3fd2a44ab
 
-#EXTINF:-1 tvg-id="vtv8" tvg-name="VTV8" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv8.png" group-title="VTV",VTV8 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch8.m3u8
+#EXTINF:-1 tvg-name="VTV5",VTV5 (1920x1080 - 3408kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029311/vtv5/playlist.m3u8?hdnts=exp=1792742607~acl=/hls/live/2029311/vtv5/*~hmac=3c4e74b4ff4321c8a0d46037cc720a94a61ca417c33f57ee246cd038fa61556e
 
-#EXTINF:-1 tvg-id="vtv9" tvg-name="VTV9" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv9.png" group-title="VTV",VTV9 HD (1080p - Akamai CDN)
-https://live-vtv-aws.vtvgo.vn/ch9.m3u8
+#EXTINF:-1 tvg-name="VTV4",VTV4 (1920x1080 - 3308kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029310/vtv4/playlist.m3u8?hdnts=exp=1792742607~acl=/hls/live/2029310/vtv4/*~hmac=b8e25494363cc7ea246513572cb482807a3514fc39feb824597a454e094373c6
+
+#EXTINF:-1 tvg-name="VTV4",VTV4 (1280x720 - 1850kbps)
+https://live-vtv-qt-aws.vtvdigital.vn/MMlpY0ewWrHuNLsN7pw1vg/1792778400/aws/vtv4_free/playlist.m3u8
+
+#EXTINF:-1 tvg-name="VTV3",VTV3 (1920x1080 - 3280kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029309/vtv3/playlist.m3u8?hdnts=exp=1792742606~acl=/hls/live/2029309/vtv3/*~hmac=541ec4a0168833b98fd30a59eb8af93e9bf58e4a8668c6b7e73e1fab055c053f
+
+#EXTINF:-1 tvg-name="VTV3",VTV3 (1280x720 - 1850kbps)
+https://live-vtv-qt-aws.vtvdigital.vn/UyR_0VBJnWob_tvh1oOtOQ/1792778400/aws/vtv3_free/playlist.m3u8
+
+#EXTINF:-1 tvg-name="VTV2",VTV2 (1920x1080 - 3379kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792742606~acl=/hls/live/2029308/vtv2/*~hmac=14581e73035269cf76b72742ff06cabaadb1b66cb646282e7c4579b997acb056
+
+#EXTINF:-1 tvg-name="VTV1",VTV1 (1920x1080 - 3321kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029307/vtv1/playlist.m3u8?hdnts=exp=1792742606~acl=/hls/live/2029307/vtv1/*~hmac=4d0c2a444ae064430be6804eeef3fa8fb88eb94530bcb1fd5f80ba0d437ab09d
+
+#EXTINF:-1 tvg-name="VTV1",VTV1 (1280x720 - 1850kbps)
+https://live-vtv-qt-aws.vtvdigital.vn/RZ74Rkib1wv5vDGcwTh3PA/1792778400/aws/vtv1_free/playlist.m3u8
+
+#EXTINF:-1 tvg-name="VTV1",VTV1 (1280x720 - 1700kbps)
+https://vtvgolivemh-plus.vtvdigital.vn/5qBffWa1S-ref6MetaT4lQ/1792742606/manifest/vtv1/master.m3u8
