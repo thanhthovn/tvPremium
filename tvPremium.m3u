@@ -1,18 +1,2 @@
 #EXTM3U
-#EXTINF:-7" tvg-name="VTV7" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv7.png" group-title="VTV",VTV7 HD (1920x1080 - 3501kbps - Akamai CDN)
-https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792747120~acl=/hls/live/2029313/vtv5tnb/*~hmac=198aaf61eca5e050c715da24b2edbe32a7405221a9f9afc168cd1e3e4e22bf1e
-
-#EXTINF:-1 tvg-id="vtv8" tvg-name="VTV8" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv8.png" group-title="VTV",VTV8 HD (1080p - AWS CloudFront CDN)
-https://live-vtv-aws.vtvgo.vn/ch8.m3u8
-
-#EXTINF:-1 tvg-id="vtv9" tvg-name="VTV9" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv9.png" group-title="VTV",VTV9 HD (1080p - AWS CloudFront CDN)
-https://live-vtv-aws.vtvgo.vn/ch9.m3u8
-
-#EXTINF:-1 tvg-id="vtv5tâynambộ" tvg-name="VTV5 Tây Nam Bộ" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv5.png" group-title="VTV",VTV5 Tây Nam Bộ HD (1920x1080 - 3298kbps - Akamai CDN)
-https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792747121~acl=/hls/live/2029314/vtv6/*~hmac=2d06eee1f6d1f31064e45daf06e663450339ac84e44cdb79ac488c7a7902c642
-
-#EXTINF:-1 tvg-id="vtv5tâynguyên" tvg-name="VTV5 Tây Nguyên" tvg-logo="https://vtvgo.vn/assets/images/logo-vtv5.png" group-title="VTV",VTV5 Tây Nguyên HD (720p - AWS CloudFront CDN)
-https://live-vtv-aws.vtvgo.vn/ch11.m3u8
-
-#EXTINF:-1 tvg-id="hànội1" tvg-name="Hà Nội 1" tvg-logo="https://vtvgo.vn/assets/images/channel_default.png" group-title="Truyền Hình Địa Phương",Hà Nội 1 HD (1280x720 - 4927kbps - VTV Digital CDN)
-https://vtvgolive-liveh34.vtvdigital.vn/_P6ykn_XK2ooHSZRiwcXFA/1792747122/hls/HANOI2/index.m3u8
+#EXTINF:-7" tvg-name="VTV7"
