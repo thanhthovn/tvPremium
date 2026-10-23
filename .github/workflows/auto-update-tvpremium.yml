@@ -1,4 +1,4 @@
-name: Tự động Quét VTVGo và Cập nhật tvPremium.m3u
+name: m3u8 Scanner Premium
 
 on:
   schedule:
