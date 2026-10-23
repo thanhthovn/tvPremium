@@ -7,6 +7,7 @@ import {
   ListVideo, FileCode, ShieldCheck, Zap, Bookmark, Activity, Terminal,
   MousePointer, HelpCircle, Share2, FolderPlus, Upload, Download,
   FileText, Trash2, Loader2, CheckSquare, Square, Filter, Save,
+  Settings, Key, Eye, EyeOff, RefreshCw, Clock, Calendar,
 } from 'lucide-react';
 
 interface ExtractedStream {
@@ -114,6 +115,60 @@ const compareStreamQuality = (a: ExtractedStream, b: ExtractedStream): number =>
   return rank(b) - rank(a);
 };
 
+const getHostname = (url: string): string => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return '';
+  }
+};
+
+const buildM3uLines = (streams: ExtractedStream[]): string[] => {
+  const groups = new Map<string, ExtractedStream[]>();
+
+  streams.forEach((stream) => {
+    let rawTitle =
+      stream.channelName ||
+      stream.pageTitle ||
+      (typeof stream.channelNumber === 'number'
+        ? `Kênh ${stream.channelNumber}`
+        : getHostname(stream.url)) ||
+      'Kênh không tên';
+
+    const channelTitle = rawTitle
+      .replace(/^(?:VTVgo|TV360|FPT Play)\s*(?:Trực Tiếp\s*)?[-:]\s*/i, '')
+      .replace(/\s*[-:]\s*(?:TV360|VTVgo|FPT Play).*$/i, '')
+      .replace(/[\r\n]+/g, ' ')
+      .trim() || 'Kênh không tên';
+
+    if (!groups.has(channelTitle)) groups.set(channelTitle, []);
+    const arr = groups.get(channelTitle)!;
+    if (!arr.some((s) => s.url === stream.url)) arr.push(stream);
+  });
+
+  const lines: string[] = ['#EXTM3U'];
+
+  groups.forEach((groupStreams, channelTitle) => {
+    const sorted = [...groupStreams].sort(compareStreamQuality);
+
+    sorted.forEach((s) => {
+      const q = s.probeBest;
+      const res = q?.resolution || '';
+      const kbps = q?.bitrate ? q.bitrate.replace(' kbps', '') + 'kbps' : '';
+      const qualityText = [res, kbps].filter(Boolean).join(' - ');
+      const displayQuality = qualityText ? ` (${qualityText})` : '';
+
+      const finalName = `${channelTitle}${displayQuality}`;
+
+      lines.push(`#EXTINF:-1 tvg-name="${channelTitle}",${finalName}`);
+      lines.push(s.url);
+      lines.push('');
+    });
+  });
+
+  return lines;
+};
+
 export default function App() {
   const [inputUrl, setInputUrl] = useState('https://vtvgo.vn/channel/1');
   const [isScanning, setIsScanning] = useState(false);
@@ -181,6 +236,45 @@ export default function App() {
   const [isSavingPlaylist, setIsSavingPlaylist] = useState(false);
   const [saveSuccessNotice, setSaveSuccessNotice] = useState<string | null>(null);
 
+  // GitHub Integration State
+  const [ghToken, setGhToken] = useState(() => localStorage.getItem('gh_token') || '');
+  const [ghRepo, setGhRepo] = useState(() => localStorage.getItem('gh_repo') || 'thanhthovn/tvPremium');
+  const [ghBranch, setGhBranch] = useState(() => localStorage.getItem('gh_branch') || 'main');
+  const [autoSaveAndSync, setAutoSaveAndSync] = useState(() => localStorage.getItem('gh_auto_sync') !== 'false');
+  const [isGhModalOpen, setIsGhModalOpen] = useState(false);
+  const [showGhToken, setShowGhToken] = useState(false);
+  const [lastSyncStatus, setLastSyncStatus] = useState<{
+    time: string;
+    success: boolean;
+    message: string;
+    commitUrl?: string;
+  } | null>(null);
+
+  const [tempToken, setTempToken] = useState(ghToken);
+  const [tempRepo, setTempRepo] = useState(ghRepo);
+  const [tempBranch, setTempBranch] = useState(ghBranch);
+  const [tempAutoSync, setTempAutoSync] = useState(autoSaveAndSync);
+
+  const openGhModal = () => {
+    setTempToken(ghToken);
+    setTempRepo(ghRepo);
+    setTempBranch(ghBranch);
+    setTempAutoSync(autoSaveAndSync);
+    setIsGhModalOpen(true);
+  };
+
+  const saveGhSettings = (token: string, repo: string, branch: string, autoSync: boolean) => {
+    setGhToken(token);
+    setGhRepo(repo);
+    setGhBranch(branch);
+    setAutoSaveAndSync(autoSync);
+    localStorage.setItem('gh_token', token.trim());
+    localStorage.setItem('gh_repo', repo.trim());
+    localStorage.setItem('gh_branch', branch.trim());
+    localStorage.setItem('gh_auto_sync', String(autoSync));
+    setIsGhModalOpen(false);
+  };
+
   const fetchPlaylistStatus = useCallback(async () => {
     try {
       const res = await fetch('/api/playlist-status');
@@ -191,9 +285,144 @@ export default function App() {
     } catch {}
   }, []);
 
+  // Schedule state (01:00 AM & 13:00 PM VN)
+  const [scheduleStatus, setScheduleStatus] = useState<{
+    enabled: boolean;
+    schedule: string;
+    serverVnTime: string;
+    nextRun: string;
+    isRunning: boolean;
+    logs: Array<{ time: string; message: string; success: boolean }>;
+  } | null>(null);
+  const [isTriggeringSchedule, setIsTriggeringSchedule] = useState(false);
+
+  const fetchScheduleStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/schedule-status');
+      if (res.ok) {
+        const data = await res.json();
+        setScheduleStatus(data);
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     fetchPlaylistStatus();
-  }, [fetchPlaylistStatus]);
+    fetchScheduleStatus();
+    const interval = setInterval(fetchScheduleStatus, 30000);
+    return () => clearInterval(interval);
+  }, [fetchPlaylistStatus, fetchScheduleStatus]);
+
+  const triggerScheduleScanNow = async () => {
+    setIsTriggeringSchedule(true);
+    try {
+      const res = await fetch('/api/trigger-scheduled-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ghToken: (localStorage.getItem('gh_token') || ghToken).trim(),
+          ghRepo: (localStorage.getItem('gh_repo') || ghRepo || 'thanhthovn/tvPremium').trim(),
+          ghBranch: (localStorage.getItem('gh_branch') || ghBranch || 'main').trim(),
+        }),
+      });
+      const data = await res.json();
+      fetchPlaylistStatus();
+      fetchScheduleStatus();
+      if (data.success) {
+        setSaveSuccessNotice(
+          `⚡ Tiến trình quét VTVGo định kỳ đã chạy thành công (${data.scanResult?.totalStreams || 0} luồng)! File tvPremium.m3u đã được lưu và đồng bộ.`
+        );
+        setTimeout(() => setSaveSuccessNotice(null), 8000);
+      } else {
+        alert(data.message || data.error || 'Có lỗi khi chạy tiến trình quét.');
+      }
+    } catch (e: any) {
+      alert('Lỗi kết nối máy chủ: ' + e.message);
+    } finally {
+      setIsTriggeringSchedule(false);
+    }
+  };
+
+  const executeAutoSaveAndSync = useCallback(
+    async (
+      streamsToSave: ExtractedStream[],
+      showNotification = true,
+      customMsg?: string
+    ) => {
+      if (!streamsToSave || streamsToSave.length === 0) return;
+
+      const lines = buildM3uLines(streamsToSave);
+      setIsSavingPlaylist(true);
+
+      const targetRepo = (localStorage.getItem('gh_repo') || ghRepo || 'thanhthovn/tvPremium').trim();
+      const targetToken = (localStorage.getItem('gh_token') || ghToken).trim();
+      const targetBranch = (localStorage.getItem('gh_branch') || ghBranch || 'main').trim();
+
+      try {
+        const res = await fetch('/api/github-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: targetToken || undefined,
+            repo: targetRepo,
+            branch: targetBranch,
+            filePath: 'tvPremium.m3u',
+            lines,
+            commitMessage: customMsg || `Auto-sync tvPremium.m3u (${streamsToSave.length} channels)`,
+          }),
+        });
+
+        const data = await res.json();
+        fetchPlaylistStatus();
+
+        const nowTime = new Date().toLocaleTimeString('vi-VN');
+
+        if (res.ok && data.success) {
+          if (data.githubSynced) {
+            setLastSyncStatus({
+              time: nowTime,
+              success: true,
+              message: `Đã tự động lưu & đồng bộ đè lên GitHub (${data.repo}/tvPremium.m3u)`,
+              commitUrl: data.commitUrl,
+            });
+            if (showNotification) {
+              setSaveSuccessNotice(
+                `⚡ Hoàn tất: Đã tự động lưu & đồng bộ đè lên GitHub (${data.repo}/tvPremium.m3u)!`
+              );
+              setTimeout(() => setSaveSuccessNotice(null), 8000);
+            }
+          } else {
+            setLastSyncStatus({
+              time: nowTime,
+              success: true,
+              message: `Đã lưu file tvPremium.m3u vào dự án (${data.channelCount} kênh). Hãy nhập GitHub Token để tự động đẩy lên repo.`,
+            });
+            if (showNotification) {
+              setSaveSuccessNotice(
+                `💾 Đã tự động lưu ${data.channelCount} kênh vào file "tvPremium.m3u" trong dự án! (Nhấp Cài đặt GitHub để tự động đồng bộ thẳng lên repo không cần bấm tay).`
+              );
+              setTimeout(() => setSaveSuccessNotice(null), 8000);
+            }
+          }
+        } else {
+          setLastSyncStatus({
+            time: nowTime,
+            success: false,
+            message: data.error || 'Lỗi khi đồng bộ lên GitHub',
+          });
+        }
+      } catch (err: any) {
+        setLastSyncStatus({
+          time: new Date().toLocaleTimeString('vi-VN'),
+          success: false,
+          message: 'Lỗi mạng: ' + err.message,
+        });
+      } finally {
+        setIsSavingPlaylist(false);
+      }
+    },
+    [ghToken, ghRepo, ghBranch, fetchPlaylistStatus]
+  );
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -521,8 +750,24 @@ export default function App() {
 
       if (myProbeSession !== undefined && myProbeSession !== probeSessionRef.current) return;
       setIsProbing(false);
+
+      // Tự động lưu & đồng bộ lên GitHub khi hoàn thành dò kênh
+      if (autoSaveAndSync) {
+        setter((finalProbed) => {
+          if (finalProbed.length > 0) {
+            setTimeout(() => {
+              executeAutoSaveAndSync(
+                finalProbed,
+                true,
+                `Auto-sync tvPremium.m3u after probing (${finalProbed.length} channels)`
+              );
+            }, 60);
+          }
+          return finalProbed;
+        });
+      }
     },
-    [probeHlsQuality]
+    [probeHlsQuality, autoSaveAndSync, executeAutoSaveAndSync]
   );
 
   // ===== MAIN SCAN (single URL) =====
@@ -591,6 +836,10 @@ export default function App() {
               myProbe
             );
           }, 50);
+        } else if (!autoProbeEnabled && autoSaveAndSync && titledStreams.length > 0) {
+          setTimeout(() => {
+            executeAutoSaveAndSync(titledStreams, true);
+          }, 100);
         }
       } else {
         setScanError(
@@ -973,63 +1222,17 @@ export default function App() {
 
         return prev;
       });
-    }
-  };
-
-    // ===== XÂY DỰNG FILE M3U CHUẨN =====
-  const buildM3uLines = (streams: ExtractedStream[]): string[] => {
-    const groups = new Map<string, ExtractedStream[]>();
-
-    streams.forEach((stream) => {
-      let rawTitle =
-        stream.channelName ||
-        stream.pageTitle ||
-        (typeof stream.channelNumber === 'number'
-          ? `Kênh ${stream.channelNumber}`
-          : getHostname(stream.url)) ||
-        'Kênh không tên';
-
-      // Làm sạch tên kênh (bỏ các tiền tố rác)
-      const channelTitle = rawTitle
-        .replace(/^(?:VTVgo|TV360|FPT Play)\s*(?:Trực Tiếp\s*)?[-:]\s*/i, '')
-        .replace(/\s*[-:]\s*(?:TV360|VTVgo|FPT Play).*$/i, '')
-        .replace(/[\r\n]+/g, ' ')
-        .trim() || 'Kênh không tên';
-
-      if (!groups.has(channelTitle)) groups.set(channelTitle, []);
-      const arr = groups.get(channelTitle)!;
-      // Loại trùng URL
-      if (!arr.some((s) => s.url === stream.url)) arr.push(stream);
-    });
-
-    const lines: string[] = ['#EXTM3U'];
-
-    groups.forEach((groupStreams, channelTitle) => {
-      // Sắp xếp theo chất lượng cao → thấp
-      const sorted = [...groupStreams].sort(compareStreamQuality);
-
-      sorted.forEach((s) => {
-        const q = s.probeBest;
-        
-        // Lấy thông tin phân giải và bitrate
-        const res = q?.resolution || '';
-        const kbps = q?.bitrate ? q.bitrate.replace(' kbps', '') + 'kbps' : '';
-        
-        // Tạo chuỗi hiển thị chất lượng: VD: (1920x1080 - 3398kbps)
-        const qualityText = [res, kbps].filter(Boolean).join(' - ');
-        const displayQuality = qualityText ? ` (${qualityText})` : '';
-
-        // Tên hiển thị trên đầu kênh
-        const finalName = `${channelTitle}${displayQuality}`;
-
-        // Xuất ra chuẩn M3U
-        lines.push(`#EXTINF:-1 tvg-name="${channelTitle}",${finalName}`);
-        lines.push(s.url);
-        lines.push(''); // Dòng trống phân cách
+    } else if (autoSaveAndSync) {
+      setBatchResults((prev) => {
+        const allStreams = rebuildStreamsFromBatch(prev);
+        if (allStreams.length > 0) {
+          setTimeout(() => {
+            executeAutoSaveAndSync(allStreams, true);
+          }, 60);
+        }
+        return prev;
       });
-    });
-
-    return lines;
+    }
   };
 
   // ===== TẢI FILE M3U VỀ MÁY TÍNH =====
@@ -1042,40 +1245,17 @@ export default function App() {
     downloadTextFile(`tvPremium.m3u`, lines);
   };
 
-  // ===== LƯU TRỰC TIẾP VÀO FILE tvPremium.m3u TRÊN MÁY CHỦ DỰ ÁN ĐỂ PUSH LÊN GITHUB =====
+  // ===== THỦ CÔNG: LƯU TRỰC TIẾP VÀO FILE tvPremium.m3u & ĐỒNG BỘ LÊN GITHUB =====
   const savePlaylistToTvPremium = async () => {
     if (extractedStreams.length === 0) {
       alert('Chưa có luồng nào để lưu vào file tvPremium.m3u!');
       return;
     }
-
-    const lines = buildM3uLines(extractedStreams);
-    setIsSavingPlaylist(true);
-    try {
-      const res = await fetch('/api/save-playlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: 'tvPremium.m3u',
-          lines,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setSaveSuccessNotice(
-          `Đã lưu thành công ${data.channelCount || extractedStreams.length} kênh vào file "tvPremium.m3u"! Bây giờ bạn hãy mở tab "GitHub sync" ở thanh trên và bấm "Push changes to GitHub" để đẩy file lên kho GitHub của bạn.`
-        );
-        fetchPlaylistStatus();
-        setTimeout(() => setSaveSuccessNotice(null), 10000);
-      } else {
-        alert(data.error || 'Có lỗi khi lưu file tvPremium.m3u');
-      }
-    } catch (err: any) {
-      alert('Lỗi kết nối máy chủ: ' + err.message);
-    } finally {
-      setIsSavingPlaylist(false);
-    }
+    await executeAutoSaveAndSync(
+      extractedStreams,
+      true,
+      `Manual sync tvPremium.m3u (${extractedStreams.length} channels)`
+    );
   };
 
   const exportDetailedReport = () => {
@@ -1230,6 +1410,15 @@ export default function App() {
             return initial;
           });
         }, 50);
+      } else if (autoSaveAndSync) {
+        setExtractedStreams((finalVtv) => {
+          if (finalVtv.length > 0) {
+            setTimeout(() => {
+              executeAutoSaveAndSync(finalVtv, true);
+            }, 60);
+          }
+          return finalVtv;
+        });
       }
     }
   };
@@ -1336,7 +1525,25 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={openGhModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-indigo-500/60 text-xs text-slate-200 transition cursor-pointer shadow-sm"
+              title="Cài đặt tự động lưu & đồng bộ file tvPremium.m3u lên GitHub"
+            >
+              <Settings className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Đồng bộ GitHub</span>
+              {ghToken ? (
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                  Auto ON
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  Cần Token
+                </span>
+              )}
+            </button>
+
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Trình phát M3U8</span>
@@ -1596,6 +1803,65 @@ Hoặc dán NHIỀU dòng (mỗi dòng 1 link) để quét hàng loạt.
           </div>
         </div>
 
+        {/* ================= LỊCH QUÉT TỰ ĐỘNG VTVGO (01:00 & 13:00) ================= */}
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-bold text-white">
+                  Lịch Quét Tự Động VTVGo (Mỗi ngày 2 lần: 01:00 & 13:00 Giờ VN)
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  Đã kích hoạt
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono">
+                  GitHub Actions 24/7
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Tự động cào lại toàn bộ kênh VTVGo, dò chuẩn phân giải & bitrate cao nhất, lưu vào <code className="text-indigo-300 font-mono">tvPremium.m3u</code> và đẩy đè lên repo <strong className="text-white font-mono">{ghRepo}</strong>.
+              </p>
+              <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-0.5 flex-wrap">
+                <span>Giờ máy chủ VN: <strong className="text-slate-200">{scheduleStatus?.serverVnTime || 'Đang cập nhật...'}</strong></span>
+                <span>•</span>
+                <span>Lần chạy tới: <strong className="text-emerald-300">{scheduleStatus?.nextRun || '01:00 AM / 13:00 PM'}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+            <button
+              onClick={triggerScheduleScanNow}
+              disabled={isTriggeringSchedule || scheduleStatus?.isRunning}
+              className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-indigo-600/25"
+              title="Kích hoạt chạy quét toàn bộ VTVGo và đồng bộ lên GitHub ngay lúc này"
+            >
+              {isTriggeringSchedule || scheduleStatus?.isRunning ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Đang chạy quét...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Chạy quét thử ngay</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={openGhModal}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition cursor-pointer"
+              title="Cài đặt thông tin GitHub"
+            >
+              <Settings className="w-4 h-4 text-indigo-400" />
+            </button>
+          </div>
+        </div>
+
         {/* ================= PLAYER (FULL WIDTH) ================= */}
         <div
           ref={playerRef}
@@ -1832,50 +2098,94 @@ Hoặc dán NHIỀU dòng (mỗi dòng 1 link) để quét hàng loạt.
           </div>
 
           {/* GitHub Sync Status Card for tvPremium.m3u */}
-          <div className="mt-3 p-3 bg-slate-950/90 rounded-xl border border-slate-800/90 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 flex-wrap">
-              <FileCode className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="font-semibold text-slate-200">
-                File đồng bộ GitHub:
-              </span>
-              <code className="px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 font-mono font-bold">
-                tvPremium.m3u
-              </code>
-              {playlistFileStatus?.exists ? (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  Đang lưu {playlistFileStatus.channelCount ?? 0} kênh
+          <div className="mt-3 p-3.5 bg-slate-950/90 rounded-xl border border-slate-800/90 flex flex-col gap-2.5 text-xs shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <FileCode className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-semibold text-slate-200">
+                  File đích:
                 </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-medium">
-                  Chưa khởi tạo
+                <code className="px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 font-mono font-bold">
+                  tvPremium.m3u
+                </code>
+                {playlistFileStatus?.exists ? (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    Đang lưu {playlistFileStatus.channelCount ?? 0} kênh
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-medium">
+                    Chưa khởi tạo
+                  </span>
+                )}
+                <span className="text-slate-500">•</span>
+                <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
+                  GitHub: <strong className="text-slate-200">{ghRepo}</strong> ({ghBranch})
                 </span>
-              )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={openGhModal}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-600/50 text-indigo-200 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
+                  title="Mở bảng cấu hình GitHub Token và tự động đẩy code"
+                >
+                  <Settings className="w-3 h-3 text-indigo-400" />
+                  <span>Cài đặt Auto GitHub</span>
+                </button>
+                <a
+                  href="/tvPremium.m3u"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium flex items-center gap-1 transition"
+                  title="Mở xem nội dung file tvPremium.m3u trực tiếp"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>Xem file</span>
+                </a>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/tvPremium.m3u`;
+                    copyText(url);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
+                  title="Sao chép đường dẫn IPTV URL trực tiếp"
+                >
+                  <Copy className="w-3 h-3" />
+                  <span>Copy URL IPTV</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <a
-                href="/tvPremium.m3u"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium flex items-center gap-1 transition"
-                title="Mở xem nội dung file tvPremium.m3u trực tiếp"
+            {/* Trạng thái đồng bộ tự động gần nhất */}
+            {lastSyncStatus && (
+              <div
+                className={`pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] gap-2 flex-wrap ${
+                  lastSyncStatus.success ? 'text-emerald-300' : 'text-amber-300'
+                }`}
               >
-                <ExternalLink className="w-3 h-3" />
-                <span>Xem file</span>
-              </a>
-              <button
-                onClick={() => {
-                  const url = `${window.location.origin}/tvPremium.m3u`;
-                  copyText(url);
-                }}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
-                title="Sao chép đường dẫn IPTV URL trực tiếp"
-              >
-                <Copy className="w-3 h-3" />
-                <span>Copy URL IPTV</span>
-              </button>
-            </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {lastSyncStatus.success ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  )}
+                  <span>{lastSyncStatus.message}</span>
+                  <span className="text-slate-500 text-[10px]">({lastSyncStatus.time})</span>
+                </div>
+                {lastSyncStatus.commitUrl && (
+                  <a
+                    href={lastSyncStatus.commitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-indigo-400 hover:text-indigo-300 font-mono text-[10px] flex items-center gap-1 shrink-0"
+                  >
+                    <span>Xem commit trên GitHub</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Toast / Notification when saved */}
@@ -2091,6 +2401,173 @@ Hoặc dán NHIỀU dòng (mỗi dòng 1 link) để quét hàng loạt.
           )}
         </div>
       </main>
+
+      {/* GitHub Auto-Sync Modal */}
+      {isGhModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+              <div className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-indigo-400" />
+                <h3 className="font-semibold text-sm text-white">
+                  Cấu hình Tự động Lưu & Đồng bộ GitHub
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsGhModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs">
+              <div className="p-3 bg-indigo-950/40 border border-indigo-700/40 rounded-xl text-slate-300 space-y-1.5 leading-relaxed">
+                <p className="font-semibold text-indigo-200 flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-indigo-400" />
+                  Cơ chế tự động:
+                </p>
+                <p>
+                  1. Mỗi khi dò kênh xong, playlist sẽ <strong>tự động lưu vào file <code className="text-white font-mono bg-slate-900 px-1 py-0.5 rounded">tvPremium.m3u</code></strong> trong dự án.
+                </p>
+                <p>
+                  2. Nếu có <strong>GitHub Token</strong>, hệ thống sẽ tự động gọi GitHub API để <strong>tạo mới hoặc ghi đè file <code className="text-white font-mono bg-slate-900 px-1 py-0.5 rounded">tvPremium.m3u</code> trên GitHub</strong> của bạn mà không cần bấm nút thủ công.
+                </p>
+              </div>
+
+              {/* Repo input */}
+              <div className="space-y-1.5">
+                <label className="font-medium text-slate-300 flex items-center justify-between">
+                  <span>GitHub Repository:</span>
+                  <span className="text-[10px] text-slate-500 font-mono">owner/repo-name</span>
+                </label>
+                <input
+                  type="text"
+                  value={tempRepo}
+                  onChange={(e) => setTempRepo(e.target.value)}
+                  placeholder="thanhthovn/tvPremium"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Branch input */}
+              <div className="space-y-1.5">
+                <label className="font-medium text-slate-300 flex items-center justify-between">
+                  <span>Nhánh (Branch):</span>
+                  <span className="text-[10px] text-slate-500">Mặc định: main</span>
+                </label>
+                <input
+                  type="text"
+                  value={tempBranch}
+                  onChange={(e) => setTempBranch(e.target.value)}
+                  placeholder="main"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Token input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-medium text-slate-300 flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-amber-400" />
+                    <span>GitHub Personal Access Token (PAT):</span>
+                  </label>
+                  <a
+                    href="https://github.com/settings/tokens/new?scopes=repo&description=M3U8-AutoSync"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-indigo-400 hover:underline flex items-center gap-1"
+                  >
+                    <span>Tạo Token (1 phút)</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showGhToken ? 'text' : 'password'}
+                    value={tempToken}
+                    onChange={(e) => setTempToken(e.target.value)}
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-10 text-xs font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGhToken(!showGhToken)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    {showGhToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Token cần quyền <code className="text-indigo-300">repo</code> (với Classic Token) hoặc <code className="text-indigo-300">Contents: Read and write</code> (với Fine-grained Token).
+                </p>
+              </div>
+
+              {/* Auto Sync Toggle */}
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-slate-200">Tự động đẩy lên GitHub khi dò kênh xong</p>
+                  <p className="text-[10px] text-slate-500">
+                    Ghi đè và commit file tvPremium.m3u ngay khi hoàn tất
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTempAutoSync(!tempAutoSync)}
+                  className={`w-11 h-6 rounded-full transition-colors flex items-center p-1 cursor-pointer ${
+                    tempAutoSync ? 'bg-indigo-600 justify-end' : 'bg-slate-700 justify-start'
+                  }`}
+                >
+                  <div className="w-4 h-4 rounded-full bg-white shadow-md" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between gap-2">
+              {extractedStreams.length > 0 && tempToken && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveGhSettings(tempToken, tempRepo, tempBranch, tempAutoSync);
+                    setTimeout(() => {
+                      executeAutoSaveAndSync(
+                        extractedStreams,
+                        true,
+                        `Manual sync tvPremium.m3u (${extractedStreams.length} channels)`
+                      );
+                    }, 50);
+                  }}
+                  disabled={isSavingPlaylist}
+                  className="px-3 py-1.5 text-xs text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-700/50 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSavingPlaylist ? 'animate-spin' : ''}`} />
+                  <span>Lưu & Đồng bộ ngay</span>
+                </button>
+              )}
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={() => setIsGhModalOpen(false)}
+                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white transition cursor-pointer"
+                >
+                  Đóng
+                </button>
+                <button
+                  onClick={() => {
+                    saveGhSettings(tempToken, tempRepo, tempBranch, tempAutoSync);
+                    alert('Đã lưu cấu hình GitHub thành công!');
+                  }}
+                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition cursor-pointer shadow-md shadow-indigo-600/30"
+                >
+                  Lưu cấu hình
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Raw HTML Paste Modal */}
       {isRawModalOpen && (

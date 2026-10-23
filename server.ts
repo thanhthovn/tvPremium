@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { runVtvgoUpdate } from './scripts/update-vtvgo.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -869,6 +870,148 @@ async function startServer() {
     }
   });
 
+  // API: Auto-Save local tvPremium.m3u & Sync to GitHub (create or replace)
+  app.post('/api/github-sync', async (req, res) => {
+    try {
+      const {
+        token,
+        repo = 'thanhthovn/tvPremium',
+        branch = 'main',
+        filePath = 'tvPremium.m3u',
+        content,
+        lines,
+        commitMessage,
+      } = req.body;
+
+      // 1. Prepare UTF-8 BOM M3U content
+      let finalContent = '';
+      if (typeof content === 'string') {
+        finalContent = content;
+      } else if (Array.isArray(lines)) {
+        finalContent = lines.join('\r\n');
+      } else {
+        return res.status(400).json({ success: false, error: 'Dữ liệu danh sách phát không hợp lệ' });
+      }
+
+      if (!finalContent.startsWith('\uFEFF')) {
+        finalContent = '\uFEFF' + finalContent;
+      }
+
+      // 2. Always auto-save to local workspace first
+      const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
+      fs.writeFileSync(targetPath, finalContent, 'utf8');
+      const stats = fs.statSync(targetPath);
+      const channelCount = (finalContent.match(/#EXTINF/gi) || []).length;
+
+      // 3. If no GitHub token provided, return local save success
+      if (!token || typeof token !== 'string' || !token.trim()) {
+        return res.json({
+          success: true,
+          localSaved: true,
+          githubSynced: false,
+          channelCount,
+          updatedAt: stats.mtime,
+          message: `Đã tự động lưu ${channelCount} kênh vào file tvPremium.m3u trong dự án!`,
+        });
+      }
+
+      // 4. Clean repo string (handles "user/repo" or "https://github.com/user/repo")
+      const repoFullName = repo.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '');
+      if (!repoFullName.includes('/')) {
+        return res.status(400).json({
+          success: false,
+          localSaved: true,
+          error: 'Tên repository không hợp lệ. Định dạng chuẩn: username/repo-name (ví dụ: thanhthovn/tvPremium)',
+        });
+      }
+
+      const cleanBranch = (branch || 'main').trim();
+      const targetFilePath = (filePath || 'tvPremium.m3u').trim();
+
+      // 5. Fetch existing file SHA on GitHub (if it exists) to allow replacement / update
+      let existingSha: string | null = null;
+      const getFileUrl = `https://api.github.com/repos/${repoFullName}/contents/${targetFilePath}?ref=${encodeURIComponent(cleanBranch)}`;
+
+      const checkRes = await fetch(getFileUrl, {
+        headers: {
+          'Authorization': `Bearer ${token.trim()}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'AIStudio-M3U-AutoSync',
+        },
+      });
+
+      if (checkRes.ok) {
+        const fileInfo: any = await checkRes.json();
+        existingSha = fileInfo.sha || null;
+      } else if (checkRes.status !== 404) {
+        const errData: any = await checkRes.json().catch(() => ({}));
+        const errMsg = errData.message || checkRes.statusText;
+        return res.status(checkRes.status).json({
+          success: false,
+          localSaved: true,
+          error: `GitHub API error (${checkRes.status}): ${errMsg}. Vui lòng kiểm tra lại Token hoặc quyền truy cập Repository.`,
+        });
+      }
+
+      // 6. Push to GitHub using PUT /repos/:owner/:repo/contents/:path
+      const putFileUrl = `https://api.github.com/repos/${repoFullName}/contents/${targetFilePath}`;
+      const base64Content = Buffer.from(finalContent, 'utf8').toString('base64');
+      const finalMsg = commitMessage || `Auto-update ${targetFilePath} (${channelCount} channels)`;
+
+      const putBody: any = {
+        message: finalMsg,
+        content: base64Content,
+        branch: cleanBranch,
+      };
+      if (existingSha) {
+        putBody.sha = existingSha;
+      }
+
+      const putRes = await fetch(putFileUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token.trim()}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'AIStudio-M3U-AutoSync',
+        },
+        body: JSON.stringify(putBody),
+      });
+
+      if (!putRes.ok) {
+        const errData: any = await putRes.json().catch(() => ({}));
+        return res.status(putRes.status).json({
+          success: false,
+          localSaved: true,
+          githubSynced: false,
+          error: `Không thể đẩy lên GitHub (${putRes.status}): ${errData.message || putRes.statusText}`,
+        });
+      }
+
+      const putData: any = await putRes.json();
+
+      return res.json({
+        success: true,
+        localSaved: true,
+        githubSynced: true,
+        channelCount,
+        repo: repoFullName,
+        branch: cleanBranch,
+        sha: putData.content?.sha,
+        commitUrl: putData.commit?.html_url,
+        downloadUrl: putData.content?.download_url,
+        message: `Đã tự động lưu & đồng bộ ${channelCount} kênh lên GitHub (${repoFullName}/${targetFilePath}) thành công!`,
+      });
+
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        localSaved: true,
+        error: `Lỗi khi đồng bộ GitHub: ${err.message || 'Lỗi không xác định'}`,
+      });
+    }
+  });
+
   // API & Static: Serve tvPremium.m3u directly (IPTV stream format)
   app.get(['/tvPremium.m3u', '/api/playlist/tvPremium.m3u'], (req, res) => {
     const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
@@ -879,6 +1022,160 @@ async function startServer() {
       return res.sendFile(targetPath);
     }
     return res.status(404).send('#EXTM3U\n# File tvPremium.m3u chua duoc tao. Vui long scan va luu tu giao dien.');
+  });
+
+  // ===== BACKGROUND SCHEDULER: 01:00 AM & 13:00 PM (Asia/Ho_Chi_Minh) =====
+  let lastScheduleRunDate: string = '';
+  let isScheduleScanning: boolean = false;
+  let scheduleLogs: Array<{ time: string; message: string; success: boolean }> = [];
+
+  function addScheduleLog(message: string, success = true) {
+    const vnTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    scheduleLogs.unshift({ time: vnTime, message, success });
+    if (scheduleLogs.length > 20) scheduleLogs.pop();
+    console.log(`[Scheduler ${vnTime}] ${message}`);
+  }
+
+  async function triggerScheduledVtvgoScan(source: string = 'Schedule') {
+    if (isScheduleScanning) {
+      return { success: false, message: 'Đang có một tiến trình quét VTVGo chạy ngầm.' };
+    }
+    isScheduleScanning = true;
+    addScheduleLog(`Bắt đầu tiến trình quét tự động VTVGo (${source})...`);
+    try {
+      const scanResult = await runVtvgoUpdate();
+      addScheduleLog(`Quét VTVGo thành công: ${scanResult.totalStreams} luồng được cập nhật vào tvPremium.m3u.`);
+
+      // Check if GitHub auto-sync config exists
+      const configPath = path.resolve(__dirname, 'server-config.json');
+      let ghToken = process.env.GITHUB_TOKEN || '';
+      let ghRepo = 'thanhthovn/tvPremium';
+      let ghBranch = 'main';
+
+      if (fs.existsSync(configPath)) {
+        try {
+          const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (cfg.ghToken) ghToken = cfg.ghToken;
+          if (cfg.ghRepo) ghRepo = cfg.ghRepo;
+          if (cfg.ghBranch) ghBranch = cfg.ghBranch;
+        } catch {}
+      }
+
+      if (ghToken && ghRepo) {
+        addScheduleLog(`Đang tự động đồng bộ lên GitHub (${ghRepo})...`);
+        const targetFilePath = 'tvPremium.m3u';
+        const fileContent = fs.readFileSync(path.resolve(__dirname, 'tvPremium.m3u'), 'utf8');
+        const base64Content = Buffer.from(fileContent, 'utf8').toString('base64');
+        const cleanRepo = ghRepo.replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '');
+
+        let existingSha: string | null = null;
+        try {
+          const getRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${targetFilePath}?ref=${ghBranch}`, {
+            headers: {
+              'Authorization': `Bearer ${ghToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'User-Agent': 'AIStudio-AutoScheduler',
+            },
+          });
+          if (getRes.ok) {
+            const data: any = await getRes.json();
+            existingSha = data.sha || null;
+          }
+        } catch {}
+
+        const putRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${targetFilePath}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${ghToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'AIStudio-AutoScheduler',
+          },
+          body: JSON.stringify({
+            message: `Auto-scan VTVGo (${scanResult.totalStreams} channels) [01:00 & 13:00 VN Schedule]`,
+            content: base64Content,
+            branch: ghBranch,
+            sha: existingSha || undefined,
+          }),
+        });
+
+        if (putRes.ok) {
+          addScheduleLog(`Đã tự động đẩy thành công lên GitHub (${cleanRepo}/${targetFilePath})!`);
+        } else {
+          const errData: any = await putRes.json().catch(() => ({}));
+          addScheduleLog(`Không thể đẩy lên GitHub: ${errData.message || putRes.statusText}`, false);
+        }
+      } else {
+        addScheduleLog('Chưa có GitHub Token trong cấu hình server, chỉ lưu file tvPremium.m3u cục bộ.');
+      }
+
+      return { success: true, scanResult };
+    } catch (err: any) {
+      addScheduleLog(`Lỗi tiến trình quét: ${err.message}`, false);
+      return { success: false, error: err.message };
+    } finally {
+      isScheduleScanning = false;
+    }
+  }
+
+  // Timer: Check every 60 seconds
+  setInterval(() => {
+    try {
+      const vnTimeStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const vnDate = new Date(vnTimeStr);
+      const hours = vnDate.getHours();
+      const minutes = vnDate.getMinutes();
+
+      // Trigger at 01:00 AM (1h sáng) and 13:00 PM (1h chiều)
+      if ((hours === 1 || hours === 13) && minutes === 0) {
+        const dateKey = `${vnDate.getFullYear()}-${vnDate.getMonth() + 1}-${vnDate.getDate()}_${hours}`;
+        if (lastScheduleRunDate !== dateKey) {
+          lastScheduleRunDate = dateKey;
+          triggerScheduledVtvgoScan(`Auto-Schedule ${hours}:00 VN Time`);
+        }
+      }
+    } catch (e: any) {
+      console.error('Lỗi timer scheduler:', e.message);
+    }
+  }, 60000);
+
+  // API: Get schedule status and recent logs
+  app.get('/api/schedule-status', (req, res) => {
+    const vnTimeNow = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const vnDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+    const hours = vnDate.getHours();
+
+    let nextRunTime = '';
+    if (hours < 1) {
+      nextRunTime = '01:00 AM hôm nay';
+    } else if (hours < 13) {
+      nextRunTime = '13:00 PM (1h chiều) hôm nay';
+    } else {
+      nextRunTime = '01:00 AM ngày mai';
+    }
+
+    return res.json({
+      enabled: true,
+      schedule: 'Mỗi ngày 2 lần vào lúc 01:00 AM và 13:00 PM (Giờ Việt Nam UTC+7)',
+      timezone: 'Asia/Ho_Chi_Minh',
+      serverVnTime: vnTimeNow,
+      nextRun: nextRunTime,
+      isRunning: isScheduleScanning,
+      lastRunDate: lastScheduleRunDate,
+      logs: scheduleLogs,
+    });
+  });
+
+  // API: Trigger scan immediately from UI
+  app.post('/api/trigger-scheduled-scan', async (req, res) => {
+    const { ghToken, ghRepo, ghBranch } = req.body || {};
+    if (ghToken || ghRepo) {
+      const configPath = path.resolve(__dirname, 'server-config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ ghToken, ghRepo, ghBranch }), 'utf8');
+    }
+
+    const result = await triggerScheduledVtvgoScan('Yêu cầu thủ công từ giao diện');
+    return res.json(result);
   });
 
   // Vite middleware in dev or static files in prod
