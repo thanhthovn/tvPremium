@@ -7,22 +7,15 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const OUTPUT_FILE = path.resolve(ROOT_DIR, 'tvPremium.m3u');
 
-const CHANNELS = [
-  { id: '1', name: 'VTV1', logo: 'https://vtvgo.vn/assets/images/logo-vtv1.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '2', name: 'VTV2', logo: 'https://vtvgo.vn/assets/images/logo-vtv2.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '3', name: 'VTV3', logo: 'https://vtvgo.vn/assets/images/logo-vtv3.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '4', name: 'VTV4', logo: 'https://vtvgo.vn/assets/images/logo-vtv4.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '5', name: 'VTV5', logo: 'https://vtvgo.vn/assets/images/logo-vtv5.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '13', name: 'VTV Cần Thơ', logo: 'https://vtvgo.vn/assets/images/logo-vtv6.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '7', name: 'VTV7', logo: 'https://vtvgo.vn/assets/images/logo-vtv7.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '8', name: 'VTV8', logo: 'https://vtvgo.vn/assets/images/logo-vtv8.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '9', name: 'VTV9', logo: 'https://vtvgo.vn/assets/images/logo-vtv9.png', group: 'VTV', defaultRes: '1080p' },
-  { id: '6', name: 'VTV5 Tây Nam Bộ', logo: 'https://vtvgo.vn/assets/images/logo-vtv5.png', group: 'VTV', defaultRes: '720p' },
-  { id: '11', name: 'VTV5 Tây Nguyên', logo: 'https://vtvgo.vn/assets/images/logo-vtv5.png', group: 'VTV', defaultRes: '720p' },
-  { id: '17', name: 'Hà Nội 1', logo: 'https://vtvgo.vn/assets/images/channel_default.png', group: 'Truyền Hình Địa Phương', defaultRes: '720p' },
-];
+// Cấu hình quét từ ID 1 đến 99 theo yêu cầu
+export const SCAN_START_ID = 1;
+export const SCAN_END_ID = 299;
+const CONCURRENCY = 10;
 
-async function fetchVtvgoStreams(channelId) {
+/**
+ * Lấy danh sách stream m3u8 cho một channelId từ API VTVGo
+ */
+async function fetchVtvgoChannel(channelId) {
   try {
     const vtvApiUrl = 'https://api.vtvdigital.org/live-channel/v21.0/playback/source';
     const res = await fetch(vtvApiUrl, {
@@ -39,14 +32,17 @@ async function fetchVtvgoStreams(channelId) {
         platform: 'webPC',
         deviceId: crypto.randomUUID(),
       }),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(6000),
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) return null;
 
     const json = await res.json();
+    const data = json.data;
+    if (!data) return null;
+
     const streams = [];
-    const sourceModes = json.data?.sourceModes || [];
+    const sourceModes = data.sourceModes || [];
 
     for (const mode of sourceModes) {
       for (const ms of mode.multiSource || []) {
@@ -70,23 +66,40 @@ async function fetchVtvgoStreams(channelId) {
       }
     }
 
-    // Deduplicate by url
-    const unique = [];
+    if (streams.length === 0) return null;
+
+    // Lọc trùng lặp URL
+    const uniqueStreams = [];
     const seen = new Set();
     for (const st of streams) {
       if (!seen.has(st.url)) {
         seen.add(st.url);
-        unique.push(st);
+        uniqueStreams.push(st);
       }
     }
 
-    return unique;
-  } catch (err) {
-    console.warn(`Lỗi khi lấy kênh ${channelId}:`, err.message);
-    return [];
+    const channelName = data.channelName?.trim() || `Kênh ${channelId}`;
+    let logo = data.logo || data.thumbnail || 'https://vtvgo.vn/assets/images/channel_default.png';
+    let group = 'VTV';
+    if (channelName.includes('Hà Nội') || channelName.includes('Địa Phương') || channelName.includes('An Ninh') || channelName.includes('Công an')) {
+      group = 'Truyền Hình';
+    }
+
+    return {
+      channelId,
+      channelName,
+      logo,
+      group,
+      streams: uniqueStreams,
+    };
+  } catch {
+    return null;
   }
 }
 
+/**
+ * Thăm dò độ phân giải và bitrate từ Master Manifest
+ */
 async function probeM3u8Quality(url) {
   try {
     const res = await fetch(url, {
@@ -94,7 +107,7 @@ async function probeM3u8Quality(url) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Referer': 'https://vtvgo.vn/',
       },
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const text = await res.text();
@@ -131,40 +144,75 @@ async function probeM3u8Quality(url) {
       return { resolution: resStr, bitrate: kbps };
     }
   } catch {
-    // Probe timeout or network issue
+    // Timeout hoặc lỗi manifest
   }
   return null;
 }
 
-export async function runVtvgoUpdate() {
-  console.log(`[${new Date().toISOString()}] Bắt đầu quét các kênh VTVGo...`);
+/**
+ * Tiến trình chính: Tự động quét từ SCAN_START_ID đến SCAN_END_ID (1 -> 99)
+ */
+export async function runVtvgoUpdate(startId = SCAN_START_ID, endId = SCAN_END_ID) {
+  console.log(`[${new Date().toISOString()}] Bắt đầu tự động quét VTVGo từ ID ${startId} đến ID ${endId}...`);
+
+  const ids = [];
+  for (let i = startId; i <= endId; i++) {
+    ids.push(i);
+  }
+
+  const validChannels = [];
+  let currentIndex = 0;
+
+  // Quét đa luồng (concurrency) để hoàn thành nhanh chóng trong vài giây
+  const worker = async () => {
+    while (currentIndex < ids.length) {
+      const id = ids[currentIndex++];
+      const result = await fetchVtvgoChannel(id);
+      if (result && result.streams.length > 0) {
+        console.log(`[ID ${id}] Tìm thấy kênh: ${result.channelName} (${result.streams.length} luồng m3u8)`);
+        validChannels.push(result);
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+
+  // Sắp xếp các kênh theo số ID tăng dần
+  validChannels.sort((a, b) => a.channelId - b.channelId);
 
   const lines = ['#EXTM3U'];
   let totalStreamsCount = 0;
 
-  for (const ch of CHANNELS) {
-    console.log(`Đang quét kênh ${ch.name} (id: ${ch.id})...`);
-    let streams = await fetchVtvgoStreams(ch.id);
+function removeVietnameseTones(str) {
+  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+  str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+  str = str.replace(/đ/g, 'd');
+  str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, 'A');
+  str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, 'E');
+  str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, 'I');
+  str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, 'O');
+  str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, 'U');
+  str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, 'Y');
+  str = str.replace(/Đ/g, 'D');
+  return str;
+}
 
-    // Fallback direct URL if API is busy
-    if (streams.length === 0) {
-      streams = [
-        {
-          url: `https://live-vtv-aws.vtvgo.vn/ch${ch.id}.m3u8`,
-          cdn: 'AWS CloudFront CDN',
-        },
-      ];
-    }
-
-    for (const st of streams) {
+  for (const ch of validChannels) {
+    for (const st of ch.streams) {
       const probe = await probeM3u8Quality(st.url);
-      const resDisplay = probe?.resolution ? probe.resolution : ch.defaultRes;
+      const resDisplay = probe?.resolution ? probe.resolution : 'HD';
       const brDisplay = probe?.bitrate ? ` - ${probe.bitrate}` : '';
       const qualityTag = ` (${resDisplay}${brDisplay} - ${st.cdn})`;
-      const displayName = `${ch.name} HD${qualityTag}`;
+      const displayName = `${ch.channelName}${qualityTag}`;
+      const cleanName = removeVietnameseTones(ch.channelName).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const tvgId = cleanName || `vtv${ch.channelId}`;
 
       lines.push(
-        `#EXTINF:-1 tvg-id="${ch.name.toLowerCase().replace(/\s+/g, '')}" tvg-name="${ch.name}" tvg-logo="${ch.logo}" group-title="${ch.group}",${displayName}`
+        `#EXTINF:-1 tvg-id="${tvgId}" tvg-name="${ch.channelName}" tvg-logo="${ch.logo}" group-title="${ch.group}",${displayName}`
       );
       lines.push(st.url);
       lines.push('');
@@ -175,10 +223,15 @@ export async function runVtvgoUpdate() {
   const finalContent = '\uFEFF' + lines.join('\r\n');
   fs.writeFileSync(OUTPUT_FILE, finalContent, 'utf8');
 
-  console.log(`[${new Date().toISOString()}] Đã cập nhật thành công ${totalStreamsCount} luồng vào file: ${OUTPUT_FILE}`);
+  console.log(
+    `[${new Date().toISOString()}] Hoàn tất quét! Tìm thấy ${validChannels.length} kênh với ${totalStreamsCount} luồng m3u8. Đã ghi vào: ${OUTPUT_FILE}`
+  );
+
   return {
+    scannedRange: `${startId} - ${endId}`,
+    channelsCount: validChannels.length,
     totalStreams: totalStreamsCount,
-    channelsCount: CHANNELS.length,
+    channels: validChannels.map((c) => ({ id: c.channelId, name: c.channelName, streams: c.streams.length })),
     outputPath: OUTPUT_FILE,
   };
 }
@@ -187,11 +240,11 @@ export async function runVtvgoUpdate() {
 if (process.argv[1] && process.argv[1].endsWith('update-vtvgo.js')) {
   runVtvgoUpdate()
     .then((res) => {
-      console.log('Quá trình quét hoàn tất thành công:', res);
+      console.log('Kết quả quét VTVGo 1-99:', res);
       process.exit(0);
     })
     .catch((err) => {
-      console.error('Lỗi khi quét VTVGo:', err);
+      console.error('Lỗi khi quét VTVGo 1-99:', err);
       process.exit(1);
     });
 }
