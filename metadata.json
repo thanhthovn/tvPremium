@@ -1,0 +1,8 @@
+{
+  "name": "Cloud Deployment & App Info",
+  "description": "Thông tin môi trường chạy và trạng thái triển khai ứng dụng trên Google Cloud Run & AI Studio. theo thời gian thực giúp quản lý tài nguyên và tối ưu hiệu suất.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
