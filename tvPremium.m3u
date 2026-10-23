@@ -1,33 +1,4 @@
-﻿#EXTM3U
-#EXTINF:-1 tvg-name="VTV1",VTV1 (1920x1080 - 3321kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029307/vtv1/playlist.m3u8?hdnts=exp=1792750707~acl=/hls/live/2029307/vtv1/*~hmac=4d00b623d72a0f74d400e1279759406be3c1a45596107fb6fa9a0013880a14f7
-
-#EXTINF:-1 tvg-name="VTV2",VTV2 (1920x1080 - 3379kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792750707~acl=/hls/live/2029308/vtv2/*~hmac=d236ef056b994954e3debc9e4e15f7a672b090fa2032e6a468cb4cb0c27b1735
-
-#EXTINF:-1 tvg-name="VTV3",VTV3 (1920x1080 - 3280kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029309/vtv3/playlist.m3u8?hdnts=exp=1792750708~acl=/hls/live/2029309/vtv3/*~hmac=efe5c5943d52ed93ac033e58374483865d9436ec8ea51cf60a49d010b5536c1f
-
-#EXTINF:-1 tvg-name="VTV4",VTV4 (1920x1080 - 3308kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029310/vtv4/playlist.m3u8?hdnts=exp=1792750708~acl=/hls/live/2029310/vtv4/*~hmac=0a8501d6c05ebd71afd24dcb5f52fc7b7bf34c449815baa9c02a0ef6bdf05616
-
-#EXTINF:-1 tvg-name="VTV5",VTV5 (1920x1080 - 3408kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029311/vtv5/playlist.m3u8?hdnts=exp=1792750708~acl=/hls/live/2029311/vtv5/*~hmac=3d047cd12c8d8124d1bba1e8b84a9a01bac4dbc9050825799ecc617c5af4be0e
-
-#EXTINF:-1 tvg-name="VTV6",VTV6 (854x480 - 949kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2125536/vtv6tt/playlist.m3u8?hdnts=exp=1792750709~acl=/hls/live/2125536/vtv6tt/*~hmac=c6bd25fccf9e77a101818133bc611c6cb689f803ec115ae73eea1dd75030645f
-
-#EXTINF:-1 tvg-name="VTV7",VTV7 (1920x1080 - 3321kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029315/vtv7/playlist.m3u8?hdnts=exp=1792750712~acl=/hls/live/2029315/vtv7/*~hmac=8dec4fb47cb3a5576f6595615795e46da383fcc5882584cd241749da731dbd13
-
-#EXTINF:-1 tvg-name="VTV8",VTV8 (1920x1080 - 3386kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029316/vtv8/playlist.m3u8?hdnts=exp=1792750714~acl=/hls/live/2029316/vtv8/*~hmac=b8acfde93c07d478ff3d99f3cae3bff81f7cb0abc91ecb330b0b5da558353792
-
-#EXTINF:-1 tvg-name="VTV9",VTV9 (1920x1080 - 3426kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029317/vtv9/playlist.m3u8?hdnts=exp=1792750715~acl=/hls/live/2029317/vtv9/*~hmac=09161838ad6396922a89a9b7628efeb04c15555339ecba8b09e196f6f1aadebe
-
-#EXTINF:-1 tvg-name="VTV10",VTV10 (1920x1080 - 3298kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792750708~acl=/hls/live/2029314/vtv6/*~hmac=fca13b77f525b88e66557cb06a9b806ff2123e9434b0bae1ce5bde3d9996202f
+29314/vtv6/*~hmac=fca13b77f525b88e66557cb06a9b806ff2123e9434b0bae1ce5bde3d9996202f
 
 #EXTINF:-1 tvg-name="VTV5 Tây Nam Bộ",VTV5 Tây Nam Bộ (1920x1080 - 3501kbps)
 https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792750708~acl=/hls/live/2029313/vtv5tnb/*~hmac=05c85ba6e140082d94bf1cdbd6d3e92e65239371a903c45e49769e304f542c6d
