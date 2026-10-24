@@ -2,7 +2,7 @@
 
 #EXTINF:-1 tvg-id="vtv1hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv1.png", VTV1
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57
-https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792826212~acl=/hls/live/2029314/vtv6/*~hmac=736fb5a5c9ba2f91ea7902ecf25cf6a33e0f4b5043c6a4c4a12dd95aa36742cd
+https://vtv-l6/*~hmac=736fb5a5c9ba2f91ea7902ecf25cf6a33e0f4b5043c6a4c4a12dd95aa36742cd
 #EXTINF:-1 tvg-id="vtv2hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv2.png", VTV2
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57
 https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792826208~acl=/hls/live/2029308/vtv2/*~hmac=21381393a962ac92c4cb2615b9a2fb27980469d3faf1cbfd5b6d3dc7321ad9e9
