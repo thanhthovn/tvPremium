@@ -35,49 +35,49 @@ const SLUG_TO_NAME: Record<string, string> = {
 
 const SLUG_ALIASES: Record<string, string[]> = {
   hue: ['Huế', 'Hue', 'TRT', 'Truyền hình Huế'],
-  danang2: ['Đà Nẵng 2', 'DN2', 'Danang 2', 'ĐÀ NẴNG 2', 'DANANGTV2'],
-  caobang: ['Cao Bằng', 'Cao Bang', 'CBTV'],
-  hatinh: ['Hà Tĩnh', 'Ha Tinh', 'HTTV'],
-  quangninh3: ['Quảng Ninh 3', 'QN3'],
-  langson: ['Lạng Sơn', 'Lang Son', 'LSTV'],
-  sonla: ['Sơn La', 'Son La', 'STV'],
-  dienbien: ['Điện Biên', 'Dien Bien', 'ĐTV'],
-  laichau: ['Lai Châu', 'Lai Chau'],
-  camau: ['Cà Mau', 'Ca Mau', 'CMTV'],
-  daklak: ['Đắk Lắk', 'Dak Lak', 'DakLak', 'DRT'],
-  gialai: ['Gia Lai', 'Gia Lai', 'GLTV'],
-  quangngai2: ['Quảng Ngãi 2', 'Quang Ngai 2', 'QNgai2'],
-  quangtri: ['Quảng Trị', 'Quang Tri', 'QRT'],
-  laocai: ['Lào Cai', 'Lao Cai', 'LCTV'],
-  tuyenquang: ['Tuyên Quang', 'Tuyen Quang', 'TQTV'],
-  cantho1: ['Cần Thơ 1', 'Can Tho 1', 'CT1', 'Cần Thơ', 'THTPCT1'],
-  cantho2: ['Cần Thơ 2', 'Can Tho 2', 'CT2', 'THTPCT2'],
-  cantho3: ['Cần Thơ 3', 'Can Tho 3', 'CT3', 'THTPCT3'],
-  dongnai1: ['Đồng Nai 1', 'Dong Nai 1', 'ĐN1', 'ĐỒNG NAI 1', 'Đồng Nai'],
-  dongnai2: ['Đồng Nai 2', 'Dong Nai 2', 'ĐN2', 'ĐỒNG NAI 2'],
-  dongnai3: ['Đồng Nai 3', 'Dong Nai 3', 'ĐN3', 'ĐỒNG NAI 3'],
-  lamdong1: ['Lâm Đồng', 'Lâm Đồng 1', 'LTV1', 'LTV 1'],
-  lamdong2: ['LTV2', 'LTV 2', 'Lâm Đồng 2', 'Bình Thuận'],
-  vinhlong1: ['Vĩnh Long 1', 'THVL1', 'THVL 1'],
-  vinhlong2: ['Vĩnh Long 2', 'THVL2', 'THVL 2'],
-  vinhlong3: ['Vĩnh Long 3', 'THVL3', 'THVL 3'],
-  vinhlong4: ['Vĩnh Long 4', 'THVL4', 'THVL 4'],
-  vinhlong5: ['Vĩnh Long 5', 'THVL5', 'THVL 5'],
-  angiang1: ['An Giang 1', 'ATV1', 'ATV 1'],
-  angiang2: ['An Giang 2', 'ATV2', 'ATV 2'],
-  angiang3: ['An Giang 3', 'ATV3', 'ATV 3'],
-  hanoi1: ['Hà Nội 1', 'HN1', 'Hà Nội'],
-  hanoi2: ['Hà Nội 2', 'HN2'],
-  haiphong: ['Hải Phòng', 'HP', 'Hải Phòng 1', 'THP'],
-  haiphong3: ['Hải Phòng 3', 'HP3'],
-  danang1: ['Đà Nẵng 1', 'DN1', 'Đà Nẵng', 'DanangTV1'],
-  quangninh1: ['Quảng Ninh 1', 'QTV1', 'Quảng Ninh'],
-  khanhhoa: ['Khánh Hòa', 'KTV', 'Khánh Hòa 1'],
-  khanhhoa1: ['Khánh Hòa 1', 'KTV1'],
-  quangngai: ['Quảng Ngãi', 'QNgai', 'Quảng Ngãi 1'],
-  dongthap1: ['Đồng Tháp 1', 'THĐT1', 'Đồng Tháp'],
-  dongthap2: ['Đồng Tháp 2', 'THĐT2'],
-  tayninh1: ['Tây Ninh 1', 'TN1', 'Tây Ninh'],
+danang2: ['Đà Nẵng 2', 'DN2', 'Danang 2', 'ĐÀ NẴNG 2', 'DANANGTV2', 'Truyền hình Đà Nẵng 2'],
+caobang: ['Cao Bằng', 'Cao Bang', 'CBTV', 'Truyền hình Cao Bằng'],
+hatinh: ['Hà Tĩnh', 'Ha Tinh', 'HTTV', 'Truyền hình Hà Tĩnh'],
+quangninh3: ['Quảng Ninh 3', 'QN3', 'Truyền hình Quảng Ninh 3'],
+langson: ['Lạng Sơn', 'Lang Son', 'LSTV', 'Truyền hình Lạng Sơn'],
+sonla: ['Sơn La', 'Son La', 'STV', 'Truyền hình Sơn La'],
+dienbien: ['Điện Biên', 'Dien Bien', 'ĐTV', 'Truyền hình Điện Biên'],
+laichau: ['Lai Châu', 'Lai Chau', 'Truyền hình Lai Châu'],
+camau: ['Cà Mau', 'Ca Mau', 'CMTV', 'Truyền hình Cà Mau'],
+daklak: ['Đắk Lắk', 'Dak Lak', 'DakLak', 'DRT', 'Truyền hình Đắk Lắk'],
+gialai: ['Gia Lai', 'Gia Lai', 'GLTV', 'Truyền hình Gia Lai'],
+quangngai2: ['Quảng Ngãi 2', 'Quang Ngai 2', 'QNgai2', 'Truyền hình Quảng Ngãi 2'],
+quangtri: ['Quảng Trị', 'Quang Tri', 'QRT', 'Truyền hình Quảng Trị'],
+laocai: ['Lào Cai', 'Lao Cai', 'LCTV', 'Truyền hình Lào Cai'],
+tuyenquang: ['Tuyên Quang', 'Tuyen Quang', 'TQTV', 'Truyền hình Tuyên Quang'],
+cantho1: ['Cần Thơ 1', 'Can Tho 1', 'CT1', 'Cần Thơ', 'THTPCT1', 'Truyền hình Cần Thơ 1'],
+cantho2: ['Cần Thơ 2', 'Can Tho 2', 'CT2', 'THTPCT2', 'Truyền hình Cần Thơ 2'],
+cantho3: ['Cần Thơ 3', 'Can Tho 3', 'CT3', 'THTPCT3', 'Truyền hình Cần Thơ 3'],
+dongnai1: ['Đồng Nai 1', 'Đồng Nai', 'DNRT1 - TRUYỀN HÌNH ĐỒNG NAI 1 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 1'],
+dongnai1: ['Đồng Nai 2', 'Đồng Nai',  'DNRT2 - TRUYỀN HÌNH ĐỒNG NAI 2 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 2'],
+dongnai1: ['Đồng Nai 3', 'Đồng Nai',  'DNRT3 - TRUYỀN HÌNH ĐỒNG NAI 3 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 3'],
+lamdong1: ['Lâm Đồng', 'Lâm Đồng 1', 'LTV1', 'LTV 1', 'Truyền hình Lâm Đồng 1'],
+lamdong2: ['LTV2', 'LTV 2', 'Lâm Đồng 2', 'Bình Thuận', 'Truyền hình Lâm Đồng 2'],
+vinhlong1: ['Vĩnh Long 1', 'THVL1', 'THVL 1', 'Truyền hình Vĩnh Long 1'],
+vinhlong2: ['Vĩnh Long 2', 'THVL2', 'THVL 2', 'Truyền hình Vĩnh Long 2'],
+vinhlong3: ['Vĩnh Long 3', 'THVL3', 'THVL 3', 'Truyền hình Vĩnh Long 3'],
+vinhlong4: ['Vĩnh Long 4', 'THVL4', 'THVL 4', 'Truyền hình Vĩnh Long 4'],
+vinhlong5: ['Vĩnh Long 5', 'THVL5', 'THVL 5', 'Truyền hình Vĩnh Long 5'],
+angiang1: ['An Giang 1', 'ATV1', 'ATV 1', 'Truyền hình An Giang 1'],
+angiang2: ['An Giang 2', 'ATV2', 'ATV 2', 'Truyền hình An Giang 2'],
+angiang3: ['An Giang 3', 'ATV3', 'ATV 3', 'Truyền hình An Giang 3'],
+hanoi1: ['Hà Nội 1', 'HN1', 'Hà Nội', 'Truyền hình Hà Nội 1'],
+hanoi2: ['Hà Nội 2', 'HN2', 'Truyền hình Hà Nội 2'],
+haiphong: ['Hải Phòng', 'HP', 'Hải Phòng 1', 'THP', 'Truyền hình Hải Phòng'],
+haiphong3: ['Hải Phòng 3', 'HP3', 'Truyền hình Hải Phòng 3'],
+danang1: ['Đà Nẵng 1', 'DN1', 'Đà Nẵng', 'DanangTV1', 'Truyền hình Đà Nẵng 1'],
+quangninh1: ['Quảng Ninh 1', 'QTV1', 'Quảng Ninh', 'Truyền hình Quảng Ninh 1'],
+khanhhoa: ['Khánh Hòa', 'KTV', 'Khánh Hòa 1', 'Truyền hình Khánh Hòa'],
+khanhhoa1: ['Khánh Hòa 1', 'KTV1', 'Truyền hình Khánh Hòa 1'],
+quangngai: ['Quảng Ngãi', 'QNgai', 'Quảng Ngãi 1', 'Truyền hình Quảng Ngãi'],
+dongthap1: ['Đồng Tháp 1', 'THĐT1', 'Đồng Tháp', 'Truyền hình Đồng Tháp 1'],
+dongthap2: ['Đồng Tháp 2', 'THĐT2', 'Truyền hình Đồng Tháp 2'],
+tayninh1: ['Tây Ninh 1', 'TN1', 'Tây Ninh', 'Truyền hình Tây Ninh 1'],
   vtv5tnb: ['VTV5 Tây Nam Bộ', 'VTV5 TNB'],
   vtv5tn: ['VTV5 Tây Nguyên', 'VTV5 TN'],
   vtv6: ['VTV6', 'VTV Cần Thơ', 'VTV6 Cần Thơ'],
@@ -732,45 +732,7 @@ async function startServer() {
     return res.status(404).send('#EXTM3U\n# File chua duoc tao.');
   });
 
-  // Scheduler...
-  let lastScheduleRunDate = '', isScheduleScanning = false; let scheduleLogs: any[] = [];
-  function addScheduleLog(message: string, success = true) { scheduleLogs.unshift({ time: new Date().toLocaleString('vi-VN'), message, success }); if (scheduleLogs.length > 20) scheduleLogs.pop(); }
-  async function triggerScheduledVtvgoScan(source: string) {
-    if (isScheduleScanning) return { success: false };
-    isScheduleScanning = true; addScheduleLog(`Bắt đầu quét (${source})...`);
-    try {
-      const scanResult = await runVtvgoUpdate(); addScheduleLog(`Quét xong: ${scanResult.totalStreams} luồng.`);
-      const cfgPath = path.resolve(__dirname, 'server-config.json'); let ghToken = process.env.GITHUB_TOKEN || '', ghRepo = 'thanhthovn/tvPremium', ghBranch = 'main';
-      if (fs.existsSync(cfgPath)) { const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); ghToken = cfg.ghToken || ghToken; ghRepo = cfg.ghRepo || ghRepo; ghBranch = cfg.ghBranch || ghBranch; }
-      if (ghToken && ghRepo) {
-        const fileContent = fs.readFileSync(path.resolve(__dirname, 'tvPremium.m3u'), 'utf8');
-        const cleanRepo = ghRepo.replace(/^https?:\/\/github\.com\//i, '');
-        const getRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/tvPremium.m3u?ref=${ghBranch}`, { headers: { 'Authorization': `Bearer ${ghToken}` } });
-        const sha = getRes.ok ? (await getRes.json()).sha : undefined;
-        const putRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/tvPremium.m3u`, { method: 'PUT', headers: { 'Authorization': `Bearer ${ghToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Auto-scan`, content: Buffer.from(fileContent).toString('base64'), branch: ghBranch, sha }) });
-        if (putRes.ok) addScheduleLog(`Đã đẩy lên GitHub!`); else addScheduleLog(`Lỗi đẩy GitHub`, false);
-      }
-      return { success: true, scanResult };
-    } catch (err: any) { addScheduleLog(`Lỗi: ${err.message}`, false); return { success: false, error: err.message }; } finally { isScheduleScanning = false; }
-  }
-  setInterval(() => {
-    const vnDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-    if ((vnDate.getHours() === 1 || vnDate.getHours() === 13) && vnDate.getMinutes() === 0) {
-      const dateKey = `${vnDate.getFullYear()}-${vnDate.getMonth() + 1}-${vnDate.getDate()}_${vnDate.getHours()}`;
-      if (lastScheduleRunDate !== dateKey) { lastScheduleRunDate = dateKey; triggerScheduledVtvgoScan(`Auto-Schedule`); }
-    }
-  }, 60000);
-
-  app.get('/api/schedule-status', (req, res) => {
-    const vnDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-    let nextRun = vnDate.getHours() < 1 ? '01:00 AM' : vnDate.getHours() < 13 ? '13:00 PM' : '01:00 AM ngày mai';
-    return res.json({ enabled: true, schedule: '01:00 & 13:00', serverVnTime: new Date().toLocaleString('vi-VN'), nextRun, isRunning: isScheduleScanning, logs: scheduleLogs });
-  });
-
-  app.post('/api/trigger-scheduled-scan', async (req, res) => {
-    const { ghToken, ghRepo, ghBranch } = req.body || {}; if (ghToken || ghRepo) fs.writeFileSync(path.resolve(__dirname, 'server-config.json'), JSON.stringify({ ghToken, ghRepo, ghBranch }), 'utf8');
-    return res.json(await triggerScheduledVtvgoScan('Manual'));
-  });
+  
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.resolve(__dirname, 'dist')));
