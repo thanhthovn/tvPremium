@@ -1699,64 +1699,120 @@ export default function App() {
           </div>
         </div>
 
-        {/* SMART REPLACE LOG */}
-        {smartReplaceLog.length > 0 && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-amber-400" />
-                Chi tiết Smart Replace (
-                {smartReplaceLog.filter((l) => l.status === 'found').length}/
-                {smartReplaceLog.length} thay thế)
-              </h3>
-              <button
-                onClick={() => setSmartReplaceLog([])}
-                className="text-[10px] text-slate-400 hover:text-white cursor-pointer"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-            <div className="max-h-72 overflow-y-auto space-y-1 pr-1">
-              {smartReplaceLog.map((l, i) => (
-                <div
-                  key={i}
-                  className={`text-[11px] px-2 py-1 rounded flex items-center gap-2 ${
-                    l.status === 'found'
-                      ? 'bg-emerald-950/50 border border-emerald-700/40'
-                      : l.status === 'kept'
-                      ? 'bg-slate-800/50 border border-slate-700/40'
-                      : l.status === 'error'
-                      ? 'bg-red-950/50 border border-red-700/40'
-                      : l.status === 'scanning'
-                      ? 'bg-amber-950/50 border border-amber-700/40'
-                      : 'bg-slate-900/50 border border-slate-800/40'
-                  }`}
-                >
-                  <span className="w-4 text-center shrink-0">
-                    {l.status === 'found'
-                      ? '✓'
-                      : l.status === 'kept'
-                      ? '='
-                      : l.status === 'error'
-                      ? '✗'
-                      : l.status === 'scanning'
-                      ? <Loader2 className="w-3 h-3 animate-spin inline" />
-                      : '·'}
-                  </span>
-                  <span className="font-mono text-cyan-300 shrink-0 w-24 truncate">{l.slug}</span>
-                  <span className="font-semibold text-white shrink-0">{l.name}</span>
-                  {l.quality && <span className="text-emerald-300 font-mono shrink-0">[{l.quality}]</span>}
-                  {l.source && (
-                    <span className="text-purple-300 text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 shrink-0">
-                      {l.source}
-                    </span>
-                  )}
-                  <span className="text-slate-400 truncate flex-1">{l.note}</span>
-                </div>
-              ))}
-            </div>
+       {/* SMART REPLACE LOG */}
+{smartReplaceLog.length > 0 && (
+  <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
+    <div className="flex items-center justify-between">
+      <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+        <Activity className="w-3.5 h-3.5 text-amber-400" />
+        Chi tiết Smart Replace (
+        {smartReplaceLog.filter((l) => l.status === 'found').length}/
+        {smartReplaceLog.length} thay thế)
+      </h3>
+      <button
+        onClick={() => setSmartReplaceLog([])}
+        className="text-[10px] text-slate-400 hover:text-white cursor-pointer"
+      >
+        <Trash2 className="w-3 h-3" />
+      </button>
+    </div>
+    <div className="max-h-96 overflow-y-auto space-y-1.5 pr-1">
+      {smartReplaceLog.map((l, i) => (
+        <div
+          key={i}
+          className={`text-[11px] px-2 py-1.5 rounded flex flex-col gap-1 ${
+            l.status === 'found'
+              ? 'bg-emerald-950/50 border border-emerald-700/40'
+              : l.status === 'kept'
+              ? 'bg-slate-800/50 border border-slate-700/40'
+              : l.status === 'error'
+              ? 'bg-red-950/50 border border-red-700/40'
+              : l.status === 'scanning'
+              ? 'bg-amber-950/50 border border-amber-700/40'
+              : 'bg-slate-900/50 border border-slate-800/40'
+          }`}
+        >
+          {/* Dòng 1: thông tin chung */}
+          <div className="flex items-center gap-2">
+            <span className="w-4 text-center shrink-0">
+              {l.status === 'found' ? '✓'
+                : l.status === 'kept' ? '='
+                : l.status === 'error' ? '✗'
+                : l.status === 'scanning' ? <Loader2 className="w-3 h-3 animate-spin inline" />
+                : '·'}
+            </span>
+            <span className="font-mono text-cyan-300 shrink-0 w-24 truncate">{l.slug}</span>
+            <span className="font-semibold text-white shrink-0">{l.name}</span>
+            {l.quality && <span className="text-emerald-300 font-mono shrink-0">[{l.quality}]</span>}
+            {l.source && (
+              <span className="text-purple-300 text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 shrink-0">
+                {l.source}
+              </span>
+            )}
+            <span className="text-slate-400 truncate flex-1">{l.note}</span>
           </div>
-        )}
+
+          {/* Dòng 2: link mới */}
+          {l.newUrl && (
+            <div className="flex items-start gap-2 pl-6">
+              <span className="text-emerald-400 font-bold shrink-0">MỚI</span>
+              <p className="font-mono text-emerald-200 break-all select-all flex-1 leading-relaxed">
+                {l.newUrl}
+              </p>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => playStream(l.newUrl!)}
+                  className="p-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-200 cursor-pointer"
+                  title="Phát"
+                >
+                  <Play className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => copyText(l.newUrl!)}
+                  className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+                  title="Copy"
+                >
+                  {copiedUrl === l.newUrl
+                    ? <Check className="w-3 h-3 text-emerald-400" />
+                    : <Copy className="w-3 h-3" />}
+                </button>
+                <a
+                  href={l.newUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  title="Mở link"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Dòng 3: link cũ (chỉ hiện khi có thay thế) */}
+          {l.status === 'found' && l.oldUrl && l.oldUrl !== l.newUrl && (
+            <div className="flex items-start gap-2 pl-6">
+              <span className="text-slate-500 font-bold shrink-0">CŨ</span>
+              <p className="font-mono text-slate-500 line-through break-all flex-1 leading-relaxed">
+                {l.oldUrl}
+              </p>
+            </div>
+          )}
+
+          {/* Trường hợp giữ nguyên: hiện link đang dùng */}
+          {l.status === 'kept' && l.oldUrl && !l.newUrl && (
+            <div className="flex items-start gap-2 pl-6">
+              <span className="text-slate-400 font-bold shrink-0">GIỮ</span>
+              <p className="font-mono text-slate-400 break-all flex-1 leading-relaxed">
+                {l.oldUrl}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {/* LỊCH QUÉT */}
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-4 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

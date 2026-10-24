@@ -485,6 +485,47 @@ async function startServer() {
     } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
   });
 
+   // ==========================================
+  // 🆕 HELPER FUNCTIONS CHO VIỆC SO KHỚP TÊN
+  // ==========================================
+  function matchScoreByLength(target: string, candidate: string): number {
+    if (!target || !candidate) return 0;
+    if (target === candidate) return 100; // Exact match
+
+    const tLen = target.length;
+    const cLen = candidate.length;
+    const diff = Math.abs(tLen - cLen);
+
+    // 1. Candidate dài hơn Target (vd: target="vtv5", candidate="vtv5tnb")
+    if (cLen > tLen && candidate.startsWith(target)) {
+      const lastT = target.slice(-1);
+      const nextC = candidate.charAt(tLen);
+      // Chặn VTV1 vs VTV10 (số nối với số)
+      if (/\d/.test(lastT) && /\d/.test(nextC)) return 0;
+      if (diff <= 3) return 80 - diff * 5; // 80, 75, 70...
+      return 0;
+    }
+
+    // 2. Target dài hơn Candidate (vd: target="vtv5tnb", candidate="vtv5")
+    if (tLen > cLen && target.startsWith(candidate)) {
+      const lastC = candidate.slice(-1);
+      const nextT = target.charAt(cLen);
+      // Chặn VTV10 vs VTV1 (số nối với số)
+      if (/\d/.test(lastC) && /\d/.test(nextT)) return 0;
+      if (diff <= 3) return 70 - diff * 5; // 70, 65, 60...
+      return 0;
+    }
+
+    // 3. Suffix match (vd: target="hue", candidate="trthue")
+    // Chỉ áp dụng nếu target KHÔNG chứa số để tránh nhầm lẫn
+    if (!/\d/.test(target) && target.length >= 3 && candidate.endsWith(target)) {
+      if (diff <= 3) return 50 - diff * 5; // 50, 45, 40...
+      return 0;
+    }
+
+    return 0;
+  }
+
   app.post('/api/smart-replace', async (req, res) => {
     try {
       const { token, repo = 'thanhthovn/tvPremium', branch = 'main', channelUrlFile = 'channel_url.txt', m3uFile = 'tvPremium.m3u' } = req.body || {};
@@ -524,8 +565,11 @@ async function startServer() {
         
         const searchKeys = new Set<string>(getSearchKeys(slug, displayName));
 
-        // Tìm trong M3U (Fuzzy)
+        // ==========================================
+        // 4a. TÌM TRONG M3U (Dùng matchScoreByLength)
+        // ==========================================
         let extinfIdx = -1;
+        let bestM3uScore = 0;
         for (let i = 0; i < lines.length; i++) {
           const l = lines[i]; if (!l.startsWith('#EXTINF')) continue;
           const rawId = (l.match(/tvg-id="([^"]+)"/i) || [])[1] || '';
@@ -534,11 +578,23 @@ async function startServer() {
           rawName = rawName.replace(/\([^)]*\)/g, '').replace(/\s+(HD|FHD|SD|4K)$/i, '').trim();
           
           const normId = normalizeKey(rawId), normTvg = normalizeKey(rawTvg), normName = normalizeKey(rawName);
+          const cands = [normId, normTvg, normName].filter(Boolean);
+          
+          let lineBestScore = 0;
           for (const k of searchKeys) {
             if (!k) continue;
-            if (normId === k || normTvg === k || normName === k || (k.length > 3 && (normName.includes(k) || k.includes(normName)))) { extinfIdx = i; break; }
+            for (const cand of cands) {
+              const s = matchScoreByLength(k, cand);
+              if (s > lineBestScore) lineBestScore = s;
+            }
+            if (lineBestScore === 100) break; // Exact match
           }
-          if (extinfIdx !== -1) break;
+
+          if (lineBestScore > bestM3uScore) {
+            bestM3uScore = lineBestScore;
+            extinfIdx = i;
+            if (bestM3uScore === 100) break; // Dừng sớm nếu đã tìm thấy kênh khớp 100%
+          }
         }
 
         if (extinfIdx === -1) { results.push({ slug, name: displayName, status: 'error', note: 'Không thấy kênh trong tvPremium.m3u' }); failed++; continue; }
@@ -547,15 +603,21 @@ async function startServer() {
         if (urlLineIdx >= lines.length || !lines[urlLineIdx].trim()) { results.push({ slug, name: displayName, status: 'error', note: 'Thiếu dòng URL' }); failed++; continue; }
         const oldUrl = lines[urlLineIdx].trim();
 
-        // 4a. Lấy candidates từ VTVGo (Fuzzy Match)
+        // ==========================================
+        // 4b. TÌM TRONG VTVGO (Dùng matchScoreByLength)
+        // ==========================================
         const vtvgoCandidates: Array<{ url: string; source: 'VTVGo' }> = [];
         let vtvgoEntry: any = undefined;
-        for (const k of searchKeys) { if (vtvgoMap.has(k)) { vtvgoEntry = vtvgoMap.get(k); break; } }
-        if (!vtvgoEntry) {
-          for (const [cacheKey, entry] of vtvgoMap.entries()) {
-            if (Array.from(searchKeys).some(k => k.length > 3 && (cacheKey.includes(k) || k.includes(cacheKey)))) { vtvgoEntry = entry; break; }
+        let bestVtvgoScore = 0;
+        for (const [cacheKey, entry] of vtvgoMap.entries()) {
+          for (const k of searchKeys) {
+            const s = matchScoreByLength(k, cacheKey);
+            if (s > bestVtvgoScore) { bestVtvgoScore = s; vtvgoEntry = entry; }
+            if (bestVtvgoScore === 100) break;
           }
+          if (bestVtvgoScore === 100) break;
         }
+
         if (vtvgoEntry) {
           try {
             let streams = vtvgoFetchCache.get(vtvgoEntry.id);
@@ -575,15 +637,21 @@ async function startServer() {
           } catch { /* ignore */ }
         }
 
-        // 4b. Lấy candidates từ XemTV (Fuzzy Match)
+        // ==========================================
+        // 4c. TÌM TRONG XEMTV (Dùng matchScoreByLength)
+        // ==========================================
         const xemtvCandidates: Array<{ url: string; source: 'XemTV' }> = [];
         let xemtvEntry: any = undefined;
-        for (const k of searchKeys) { if (xemtvMap.has(k)) { xemtvEntry = xemtvMap.get(k); break; } }
-        if (!xemtvEntry) {
-          for (const [cacheKey, entry] of xemtvMap.entries()) {
-            if (Array.from(searchKeys).some(k => k.length > 3 && (cacheKey.includes(k) || k.includes(cacheKey)))) { xemtvEntry = entry; break; }
+        let bestXemtvScore = 0;
+        for (const [cacheKey, entry] of xemtvMap.entries()) {
+          for (const k of searchKeys) {
+            const s = matchScoreByLength(k, cacheKey);
+            if (s > bestXemtvScore) { bestXemtvScore = s; xemtvEntry = entry; }
+            if (bestXemtvScore === 100) break;
           }
+          if (bestXemtvScore === 100) break;
         }
+
         if (xemtvEntry) {
           try {
             const res = await extractXemtvChannelStream(xemtvEntry.url);
@@ -591,7 +659,7 @@ async function startServer() {
           } catch { /* ignore */ }
         }
 
-        // 4c. Probe
+        // 5. Probe và thay thế
         const allCandidates = [...vtvgoCandidates, ...xemtvCandidates];
         if (allCandidates.length === 0) { results.push({ slug, name: displayName, status: 'kept', oldUrl, note: 'Không tìm được link mới' }); kept++; continue; }
         
@@ -606,21 +674,28 @@ async function startServer() {
             probed.push({ url: c.url, source: c.source, score: qualityScore(probe), quality: probe ? `${probe.resolutionStr}${probe.bitrateKbps ? ' - ' + probe.bitrateKbps : ''}` : undefined });
           }
         }));
+        
         probed.sort((a, b) => b.score - a.score);
         const best = probed[0];
 
         if (!best) { results.push({ slug, name: displayName, status: 'kept', oldUrl, note: 'Probe thất bại' }); kept++; continue; }
 
-        if (best.url === oldUrl) { results.push({ slug, name: displayName, status: 'kept', oldUrl, newUrl: best.url, quality: best.quality, source: best.source, note: 'Trùng link cũ' }); kept++; }
-        else { lines[urlLineIdx] = best.url; results.push({ slug, name: displayName, status: 'found', oldUrl, newUrl: best.url, quality: best.quality, source: best.source, note: 'Đã thay link' }); replaced++; }
+        if (best.url === oldUrl) { 
+          results.push({ slug, name: displayName, status: 'kept', oldUrl, newUrl: best.url, quality: best.quality, source: best.source, note: 'Trùng link cũ' }); 
+          kept++; 
+        } else { 
+          lines[urlLineIdx] = best.url; 
+          results.push({ slug, name: displayName, status: 'found', oldUrl, newUrl: best.url, quality: best.quality, source: best.source, note: 'Đã thay link' }); 
+          replaced++; 
+        }
       }
 
-      // 5. Commit
+      // 6. Commit
       let commitUrl, githubSynced = false; const m3uDirty = replaced > 0;
-      let newContent: string | null = null;              // 🆕
+      let newContent: string | null = null;
 
       if (m3uDirty) {
-        newContent = '\uFEFF' + lines.join(useCRLF ? '\r\n' : '\n');   // 🆕
+        newContent = '\uFEFF' + lines.join(useCRLF ? '\r\n' : '\n');
         fs.writeFileSync(path.resolve(__dirname, 'tvPremium.m3u'), newContent, 'utf8');
         const getRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${m3uFile}?ref=${cleanBranch}`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
         const sha = getRes.ok ? (await getRes.json()).sha : undefined;
@@ -641,7 +716,7 @@ async function startServer() {
         m3uDirty,
         githubSynced,
         commitUrl,
-        m3uContent: newContent,                         // 🆕 Trả về nội dung cho client
+        m3uContent: newContent,
         message: m3uDirty ? `Đã thay ${replaced} link, giữ ${kept}, lỗi ${failed}.` : `Không có link thay đổi.`
       });
     } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
