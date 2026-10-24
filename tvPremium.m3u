@@ -1,29 +1,29 @@
 ﻿#EXTM3U url-tvg="https://epg.io.vn/epgu.xml"
 
 #EXTINF:-1 tvg-id="vtv1hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv1.png", VTV1 HD
-https://vtv-live-push-token.akamaized.net/hls/live/2029307/vtv1/playlist.m3u8?hdnts=exp=1792837485~acl=/hls/live/2029307/vtv1/*~hmac=ae963009e5bf8efb68f4b9da43b97b27e5b1ace5e79d170ab05988b78409187a
+https://vtv-live-push-token.akamaized.net/hls/live/2029307/vtv1/playlist.m3u8?hdnts=exp=1792837886~acl=/hls/live/2029307/vtv1/*~hmac=171510f9b7fcf0ed3e0683db3150873a92b1f8e3c0e62a922e8ffc20d8bfe310
 #EXTINF:-1 tvg-id="vtv2hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv2.png", VTV2
-https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792837490~acl=/hls/live/2029308/vtv2/*~hmac=a2c3329844d079d5ff3e795f72d0db46135a843d74536e42ba4fbd1ec6bd45d2
+https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792837887~acl=/hls/live/2029308/vtv2/*~hmac=09e03b92066ca79f0f151cee0ab8c623ccf8231fd7068b38363bfeb5837924af
 #EXTINF:-1 tvg-id="vtv3hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv3.png", VTV3
-https://vtv-live-push-token.akamaized.net/hls/live/2029309/vtv3/playlist.m3u8?hdnts=exp=1792837491~acl=/hls/live/2029309/vtv3/*~hmac=9c2480ae225d208cb8f7126f96780836a5d5a0e53530e728ca9dd9ba38cdc9f9
+https://vtv-live-push-token.akamaized.net/hls/live/2029309/vtv3/playlist.m3u8?hdnts=exp=1792837887~acl=/hls/live/2029309/vtv3/*~hmac=6b5e445657881203e89adb5b02a038130f7433f55f1a96dde5f80cdc2f0714b8
 #EXTINF:-1 tvg-id="vtv4hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv4.png", VTV4
-https://vtv-live-push-token.akamaized.net/hls/live/2029310/vtv4/playlist.m3u8?hdnts=exp=1792837491~acl=/hls/live/2029310/vtv4/*~hmac=652efd7dbb9f7162a874b2dd52b4198b79876298fe6bfcd73b341f20c51f95da
+https://vtv-live-push-token.akamaized.net/hls/live/2029310/vtv4/playlist.m3u8?hdnts=exp=1792837888~acl=/hls/live/2029310/vtv4/*~hmac=247209c984e80f0b127f44b1d7d12028e03671362a8e5caaa04fcf7ab31c775b
 #EXTINF:-1 tvg-id="vtv5hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv5.png", VTV5
-https://vtv-live-push-token.akamaized.net/hls/live/2029311/vtv5/playlist.m3u8?hdnts=exp=1792837492~acl=/hls/live/2029311/vtv5/*~hmac=3af44d03a2dcf141846802d56f61c3542918d735bd598b9a3e0a1fd41cac77dd
+https://vtv-live-push-token.akamaized.net/hls/live/2029311/vtv5/playlist.m3u8?hdnts=exp=1792837888~acl=/hls/live/2029311/vtv5/*~hmac=d91e8ea6b0b739e08aeaed31bca5ff07216d69e8a531c80c0fba1ea68aae61ed
 #EXTINF:-1 tvg-id="vtv6hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv6.png", VTV6
 https://dethich.pw/vtv6/index.m3u8
 #EXTINF:-1 tvg-id="vtv7hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv7.png", VTV7
-https://vtv-live-push-token.akamaized.net/hls/live/2029315/vtv7/playlist.m3u8?hdnts=exp=1792837493~acl=/hls/live/2029315/vtv7/*~hmac=8160454a12fba126d8403039b830a57ded29eb9102ccff189f9b68e5be4075b3
+https://vtv-live-push-token.akamaized.net/hls/live/2029315/vtv7/playlist.m3u8?hdnts=exp=1792837889~acl=/hls/live/2029315/vtv7/*~hmac=2effcb66a2efed77e40de35854b815018e5904a9bc0dc4e911c476c9477bec32
 #EXTINF:-1 tvg-id="vtv8hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv8.png", VTV8
-https://vtv-live-push-token.akamaized.net/hls/live/2029316/vtv8/playlist.m3u8?hdnts=exp=1792837494~acl=/hls/live/2029316/vtv8/*~hmac=b1765638ee5c368ef800992d71d2c2709a5dc24b60c965c32c5bdce71df2e154
+https://vtv-live-push-token.akamaized.net/hls/live/2029316/vtv8/playlist.m3u8?hdnts=exp=1792837890~acl=/hls/live/2029316/vtv8/*~hmac=938519cd1352794c027d3992e720b14d8d307141cc318d512f9a4c30f6f0d466
 #EXTINF:-1 tvg-id="vtv9hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv9.png", VTV9
-https://vtv-live-push-token.akamaized.net/hls/live/2029317/vtv9/playlist.m3u8?hdnts=exp=1792837494~acl=/hls/live/2029317/vtv9/*~hmac=9b5701a19224842b0fc862b91c584033f847637a62bd2ec15833d46302d5e549
+https://vtv-live-push-token.akamaized.net/hls/live/2029317/vtv9/playlist.m3u8?hdnts=exp=1792837891~acl=/hls/live/2029317/vtv9/*~hmac=2440126d55f3a765db01291f6cdbd06590d3b5075ac8f7657c1c50d352d05b7a
 #EXTINF:-1 tvg-id="vtv10hd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv10.png", VTV10
-https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792837495~acl=/hls/live/2029314/vtv6/*~hmac=4c20e0bc99723aa108a7e56d7b45d1ce457891c307781dc9f8a8ce1a082eaf6f
+https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792837891~acl=/hls/live/2029314/vtv6/*~hmac=8cb98bd9894417e505199c052ce44ab0a30225061003e810dfa52c180a5d2806
 #EXTINF:-1 tvg-id="vtv5hdtnb" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv5tnb.png", VTV5 Tây Nam Bộ
-https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792837496~acl=/hls/live/2029313/vtv5tnb/*~hmac=40a6038704d85dabaed4baa7f01abdc7ef1c3ac43e3b8e280f13de543385d2ea
+https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792837892~acl=/hls/live/2029313/vtv5tnb/*~hmac=a59f5c72c09f855705a7f053d0b6cc4800f1983808b7ffd4f742d8be3c03d82b
 #EXTINF:-1 tvg-id="vtv5hdtn" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/vtv5tn.png", VTV5 Tây Nguyên
-https://vtv-live-push-token.akamaized.net/hls/live/2029312/vtv5tn/playlist.m3u8?hdnts=exp=1792837496~acl=/hls/live/2029312/vtv5tn/*~hmac=b3a1a02007ee2dff865da707d487e1836c35fe8b9fde6bb65eef5d9559a76260
+https://vtv-live-push-token.akamaized.net/hls/live/2029312/vtv5tn/playlist.m3u8?hdnts=exp=1792837892~acl=/hls/live/2029312/vtv5tn/*~hmac=99b8bd14ef1c4986b6a657119ffdfb734791e8096e16f0e0851f21b2bc85444e
 #EXTINF:-1 tvg-id="antvhd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/antv.png", ANTV HD
 https://freem3u.xyz/api/live/play.m3u8?vid=20
 #EXTINF:-1 tvg-id="qpvnhd" group-title="🇻🇳 KÊNH VTV" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/qpvn.png", QPVN HD
@@ -71,9 +71,9 @@ https://freem3u.xyz/api/live/play.m3u8?vid=33
 #EXTINF:-1 tvg-id="hanoi2" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/hanoi2.png", H2 | Báo và PTTH TP Hà Nội
 https://freem3u.xyz/api/live/play.m3u8?vid=34
 #EXTINF:-1 tvg-id="haiphong" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/haiphong.png", THP | Báo và PTTH TP Hải Phòng 
-https://live.mediatech.vn/live/28548ca35823d41426d8b3da7ed82bdab13/chunklist.m3u8
+https://vtvgolive-liveh34.vtvdigital.vn/nMUjxsaqxa3VHGVd4yyoGA/1792837905/hls/HAIDUONGTV/index.m3u8
 #EXTINF:-1 tvg-id="haiphong3" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/haiphong3.png", THP3 | Báo và PTTH TP Hải Phòng
-https://
+https://vtvgolive-liveh34.vtvdigital.vn/nMUjxsaqxa3VHGVd4yyoGA/1792837905/hls/HAIDUONGTV/index.m3u8
 #EXTINF:-1 tvg-id="dongnai1" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/dongnai1.png", ĐN1 NRTV HD | Báo và PTTH TP Đồng Nai
 https://
 #EXTINF:-1 tvg-id="dongnai2" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/dongnai2.png", ĐN2 NRTV HD | Báo và PTTH TP Đồng Nai
@@ -83,7 +83,7 @@ https://
 #EXTINF:-1 tvg-id="hue" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://i.imgur.com/q5MBibm.png", HUE TV | Báo và PTTH TP Huế
 https://vtvgolive-ott4.vtvdigital.vn/live/huetv/playlist.m3u8
 #EXTINF:-1 tvg-id="danang1" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/danang1.png", ĐNRT1 | Báo và PTTH TP Đà Nẵng
-https://
+https://vtvgolive-liveh12.vtvdigital.vn/8KJIlPhlFw9VOSBEwmoQ1g/1792837906/hls/DANANGTV/index.m3u8
 #EXTINF:-1 tvg-id="danang2" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/danang2.png", ĐNRT2 | Báo và PTTH TP Đà Nẵng
 https://
 #EXTINF:-1 tvg-id="caobang" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/caobang.png", CRTV HD | Báo và PTTH Cao Bằng
@@ -111,7 +111,7 @@ https://freem3u.xyz/api/live/play.m3u8?vid=66
 #EXTINF:-1 tvg-id="angiang2" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/angiang2.png", ATV2 | Báo và PTTH An Giang
 https://freem3u.xyz/api/live/play.m3u8?vid=35
 #EXTINF:-1 tvg-id="angiang3" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/angiang3.png", ATV3 | Báo và PTTH An Giang
-https://live.fptplay53.net/epzsd1/angiang03_hls.smil/chunklist.m3u8
+https://vtvgolive-liveh34.vtvdigital.vn/6gX4RHVQbpn6GQbNda9kGw/1792837910/hls/ANGIANGTV/index.m3u8
 #EXTINF:-1 tvg-id="camau" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/camau.png", CTV HD | Báo và PTTH Cà Mau
 https://
 #EXTINF:-1 tvg-id="dongthap1" group-title="📡BÁO và PTTH Địa phương" tvg-logo="https://raw.githubusercontent.com/thanhthovn/iOSPremium/refs/heads/logo/dongthap1.png", THĐT1 HD | Báo và PTTH Đồng Tháp
