@@ -2,14 +2,14 @@ name: Auto Update M3U Playlist (VTVGo + XemTV)
 
 on:
   # 1. Chạy tự động theo lịch (Cron)
-  # Lưu ý: GitHub Actions dùng giờ UTC. Việt Nam là UTC+7.
+  # GitHub Actions dùng giờ UTC. Việt Nam là UTC+7.
   # 01:00 VN = 18:00 UTC (ngày hôm trước)
   # 13:00 VN = 06:00 UTC
   schedule:
     - cron: '0 18 * * *' # 01:00 sáng VN
     - cron: '0 6 * * *'  # 13:00 chiều VN
 
-  # 2. Cho phép bấm chạy thủ công từ tab Actions trên GitHub
+  # 2. Cho phép bấm chạy thủ công từ tab Actions
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,11 @@ jobs:
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Khuyên dùng Node 20 vì fetch có sẵn, không cần cài thêm node-fetch
+          node-version: '20'
+
+      # 🆕 FIX LỖI: Cannot read properties of null (reading 'edgesOut')
+      - name: ⬆️ Upgrade npm to fix Arborist crash
+        run: npm install -g npm@11.6.0
 
       - name: 📦 Install Dependencies
         run: |
@@ -37,24 +41,32 @@ jobs:
             npm install
           fi
 
-      # BƯỚC NÀY SẼ CHẠY SMART REPLACE (Dùng script bạn đã viết để đọc channel_url.txt và thay link)
-      # Hoặc nếu bạn muốn chạy quét mới hoàn toàn thì đổi lệnh bên dưới thành script tương ứng.
-      # Ở đây mình gọi script update-vtvgo.js và update-xemtv.js
+      # 🚀 CHẠY SCRAPERS
       - name: 🚀 Run Scrapers (VTVGo & XemTV)
         run: |
-          echo "Đang chạy VTVGo..."
-          node scripts/update-vtvgo.js || echo "VTVGo lỗi, bỏ qua..."
+          echo "========================================="
+          echo "🚀 Đang chạy quét VTVGo..."
+          echo "========================================="
+          node scripts/update-vtvgo.js || echo "⚠️ VTVGo lỗi, bỏ qua bước này."
           
-          echo "Đang chạy XemTV..."
-          node scripts/update-xemtv.js || echo "XemTV lỗi, bỏ qua..."
+          echo "========================================="
+          echo "🚀 Đang chạy quét XemTV..."
+          echo "========================================="
+          node scripts/update-xemtv.js || echo "⚠️ XemTV lỗi, bỏ qua bước này."
 
-      # Kiểm tra xem file tvPremium.m3u có bị thay đổi nội dung không
+      # 🔍 KIỂM TRA XEM FILE CÓ THAY ĐỔI KHÔNG
       - name: 🔍 Check for changes
         id: git-check
         run: |
-          git diff --exit-code tvPremium.m3u || echo "changed=true" >> $GITHUB_OUTPUT
+          if git diff --exit-code tvPremium.m3u > /dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ Không có thay đổi nào trong file tvPremium.m3u."
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "🔥 Phát hiện thay đổi trong file tvPremium.m3u!"
+          fi
 
-      # Nếu có thay đổi thì tiến hành commit và push
+      # 💾 COMMIT VÀ PUSH NẾU CÓ THAY ĐỔI
       - name: 💾 Commit and Push changes
         if: steps.git-check.outputs.changed == 'true'
         run: |
@@ -62,12 +74,12 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add tvPremium.m3u
           
-          # Lấy thời gian hiện tại theo giờ VN để làm message
+          # Lấy thời gian hiện tại theo giờ VN
           COMMIT_MSG="Auto-update tvPremium.m3u - $(TZ='Asia/Ho_Chi_Minh' date +'%Y-%m-%d %H:%M:%S') (VN)"
           
           git commit -m "$COMMIT_MSG"
           git push
 
-      - name: ✅ Done
+      - name: ✅ Done (No changes)
         if: steps.git-check.outputs.changed == 'false'
         run: echo "Không có thay đổi nào trong tvPremium.m3u. Bỏ qua commit."
