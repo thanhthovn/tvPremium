@@ -24,12 +24,13 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run VTVGo Scanner
+      - name: Scan VTVGo (Tạo file m3u mới)
         run: bun run scripts/update-vtvgo.js
         env:
           NODE_ENV: production
 
-      - name: Run XemTV Scanner
+      # XemTV sẽ gộp kênh vào file m3u vừa tạo của VTVGo thay vì ghi đè
+      - name: Scan XemTV (Gộp vào file)
         run: bun run scripts/update-xemtv.js
         env:
           NODE_ENV: production
@@ -43,5 +44,5 @@ jobs:
             git commit -m "Auto-update tvPremium.m3u [$(date +'%Y-%m-%d %H:%M')]"
             git push
           else
-            echo "Không có thay đổi nào trong tvPremium.m3u, bỏ qua commit."
+            echo "Không có thay đổi nào, bỏ qua commit."
           fi

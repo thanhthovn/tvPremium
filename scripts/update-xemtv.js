@@ -9,41 +9,22 @@ const OUTPUT_FILE = path.resolve(ROOT_DIR, 'tvPremium.m3u');
 
 export const XEMTV_PORTAL_URL = 'https://hd1.xemtv.net/';
 const CONCURRENCY = 14;
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 export function removeVietnameseTones(str) {
   if (!str) return '';
-  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
-  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
-  str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
-  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
-  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
-  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
-  str = str.replace(/đ/g, 'd');
-  str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, 'A');
-  str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, 'E');
-  str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, 'I');
-  str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, 'O');
-  str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, 'U');
-  str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, 'Y');
-  str = str.replace(/Đ/g, 'D');
+  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a').replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e').replace(/ì|í|ị|ỉ|ĩ/g, 'i').replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o').replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u').replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y').replace(/đ/g, 'd');
+  str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, 'A').replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, 'E').replace(/Ì|Í|Ị|Ỉ|Ĩ/g, 'I').replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, 'O').replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, 'U').replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, 'Y').replace(/Đ/g, 'D');
   return str;
 }
 
 export function cleanXemtvTitle(rawTitle) {
-  let t = (rawTitle || '')
-    .replace(/^Xem\s+/i, '')
-    .replace(/^Kênh\s+Tivi\s+/i, '')
-    .replace(/^Kênh\s+/i, '')
-    .replace(/^Tivi\s+/i, '')
-    .trim();
-
+  let t = (rawTitle || '').replace(/^Xem\s+/i, '').replace(/^Kênh\s+Tivi\s+/i, '').replace(/^Kênh\s+/i, '').replace(/^Tivi\s+/i, '').trim();
   if (/VTV5\s*Tây Nam Bộ/i.test(t)) return 'VTV5 Tây Nam Bộ';
   if (/VTV5\s*Tây Nguyên/i.test(t)) return 'VTV5 Tây Nguyên';
   if (/VTV\s*Cần Thơ/i.test(t)) return 'VTV Cần Thơ';
-
   const vtvMatch = t.match(/^(VTV\s*(?:[1-9]|10))\b/i);
   if (vtvMatch) return vtvMatch[1].toUpperCase().replace(/\s+/g, '');
-
   if (t.includes(' - ')) {
     const parts = t.split(' - ');
     if (parts[0].trim().length >= 2 && parts[0].trim().length <= 32) return parts[0].trim();
@@ -77,23 +58,18 @@ export async function discoverXemtvChannels() {
   
   try {
     const res = await fetch(XEMTV_PORTAL_URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Referer': XEMTV_PORTAL_URL,
-      },
+      headers: { 'User-Agent': USER_AGENT, 'Referer': XEMTV_PORTAL_URL },
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const html = await res.text();
 
-    // Regex mạnh hơn để bắt tất cả thẻ <a> có chứa kenh-xxx.html
     const channelRegex = /<a[^>]*href=["'](?:\.\/)?(kenh-[^"']+\.html)["'][^>]*>([\s\S]*?)<\/a>/gi;
     let m;
     while ((m = channelRegex.exec(html)) !== null) {
       const rawHref = m[1];
       const inner = m[2];
       
-      // Cố gắng bắt alt hoặc text, hoặc title
       const imgMatch = inner.match(/<img[^>]*alt=["']([^"']+)["']/i) || inner.match(/<img[^>]*title=["']([^"']+)["']/i);
       const textMatch = inner.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       const titleAttrMatch = inner.match(/title=["']([^"']+)["']/i);
@@ -147,7 +123,7 @@ export async function discoverXemtvChannels() {
 export async function extractXemtvChannelStream(channelUrl) {
   try {
     const chRes = await fetch(channelUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://hd1.xemtv.net/' },
+      headers: { 'User-Agent': USER_AGENT, 'Referer': 'https://hd1.xemtv.net/' },
       signal: AbortSignal.timeout(6000),
     });
     if (!chRes.ok) return { success: false, reason: `HTTP ${chRes.status}` };
@@ -167,7 +143,7 @@ export async function extractXemtvChannelStream(channelUrl) {
       const fullIfr = ifr.startsWith('http') ? ifr : 'https://hd1.xemtv.net/' + ifr.replace(/^\//, '');
 
       try {
-        const ifrRes = await fetch(fullIfr, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': channelUrl }, signal: AbortSignal.timeout(5000) });
+        const ifrRes = await fetch(fullIfr, { headers: { 'User-Agent': USER_AGENT, 'Referer': channelUrl }, signal: AbortSignal.timeout(5000) });
         if (ifrRes.ok) {
           const ifrHtml = await ifrRes.text();
           const ifrM3u8s = ifrHtml.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/gi) || [];
@@ -195,7 +171,7 @@ export async function extractXemtvChannelStream(channelUrl) {
 
 export async function probeM3u8Quality(url) {
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://hd1.xemtv.net/' }, signal: AbortSignal.timeout(4000) });
+    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT, 'Referer': 'https://hd1.xemtv.net/' }, signal: AbortSignal.timeout(4000) });
     if (!res.ok) return null;
     const text = await res.text();
     let bestWidth = 0, bestHeight = 0, bestBitrate = 0;
@@ -220,8 +196,7 @@ export async function runXemtvUpdate(options = {}) {
   const discoveredChannels = await discoverXemtvChannels();
   const targetChannels = limit > 0 ? discoveredChannels.slice(0, limit) : discoveredChannels;
 
-  console.log(`Bắt đầu tự dò link phát cho ${targetChannels.length}/${discoveredChannels.length} kênh với concurrency ${CONCURRENCY}...`);
-
+  console.log(`Bắt đầu tự dò link phát cho ${targetChannels.length}/${discoveredChannels.length} kênh...`);
   const validChannels = [];
   let currentIndex = 0;
 
@@ -263,6 +238,12 @@ export async function runXemtvUpdate(options = {}) {
     lines.push(`#EXTINF:-1 tvg-id="${tvgId}" tvg-name="${ch.channelName}" tvg-logo="${ch.logo}" group-title="${ch.group}",${displayName}`);
     lines.push(ch.streamUrl);
     lines.push('');
+  }
+
+  // BẢO VỆ: Không ghi đè nếu không cào được kênh nào
+  if (validChannels.length === 0) {
+    console.log(`[CẢNH BÁO] Không cào được kênh nào. Giữ nguyên file tvPremium.m3u cũ!`);
+    return { portalUrl: XEMTV_PORTAL_URL, channelsDiscovered: 0, validStreamsCount: 0, channels: [] };
   }
 
   const finalContent = '\uFEFF' + lines.join('\r\n');

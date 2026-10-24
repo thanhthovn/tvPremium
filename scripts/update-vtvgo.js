@@ -392,6 +392,12 @@ export async function runVtvgoUpdate(startId = SCAN_START_ID, endId = SCAN_END_I
     lines.push('');
   }
 
+    // BẢO VỆ: Không ghi đè nếu không cào được kênh nào
+  if (validChannels.length === 0) {
+    console.log(`[CẢNH BÁO] Không cào được kênh nào. Giữ nguyên file tvPremium.m3u cũ!`);
+    return { scannedRange: '', channelsCount: 0, totalStreams: 0, channels: [] };
+  }
+
   const finalContent = '\uFEFF' + lines.join('\r\n');
   fs.writeFileSync(OUTPUT_FILE, finalContent, 'utf8');
 
