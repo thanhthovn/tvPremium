@@ -1,90 +1,315 @@
 ﻿#EXTM3U
-#EXTINF:-1 tvg-name="VTV1",VTV1 (1920x1080 - 3359kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029307/vtv1/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029307/vtv1/*~hmac=6b7328b80812ecd8463c0ecc260ecb334f5b0877af0a9999d60e10398bdd752b
+#EXTINF:-1 tvg-name="VTV1",VTV1 (1280x720 - 1800kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv1/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV2",VTV2 (1920x1080 - 3314kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029308/vtv2/*~hmac=9fa49e626d824cf4876dc1ec2266e2daf7e76b1642c7a1aeac165886815f88ab
+#EXTINF:-1 tvg-name="VTV2",VTV2 (1280x720 - 2200kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv2/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV3",VTV3 (1920x1080 - 3323kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029309/vtv3/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029309/vtv3/*~hmac=5a0c8d48355e795a843ffa229dfc96b4efb8126974ed4c3c52ced5a6bba700b0
+#EXTINF:-1 tvg-name="VTV3",VTV3 (1280x720 - 1800kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv3/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV4",VTV4 (1920x1080 - 3390kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029310/vtv4/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029310/vtv4/*~hmac=83a1d61f93a42e3b0540254375987f39d03c0012ca40c0248aecbdfa06def34c
+#EXTINF:-1 tvg-name="VTV4",VTV4 (1280x720 - 1600kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv4/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV5",VTV5 (1920x1080 - 3307kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029311/vtv5/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029311/vtv5/*~hmac=cfc39009a8673b0415b838d905deefa6c578bc93f32e2bb689dae544b78c6c50
+#EXTINF:-1 tvg-name="VTV5",VTV5 (1280x720 - 1400kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv5/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV6",VTV6 (854x480 - 948kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2125536/vtv6tt/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2125536/vtv6tt/*~hmac=d69cccc027022f306d9f808fa1de538707a9d426edb2c06c4e5b267787acd077
+#EXTINF:-1 tvg-name="VTV6",VTV6
+https://dethich.pw/vtv6/index.m3u8
 
-#EXTINF:-1 tvg-name="VTV7",VTV7 (1920x1080 - 3323kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029315/vtv7/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029315/vtv7/*~hmac=b6125939a89fdca550b07c91d9f35a7372680c5ba5eb5bb48c09e9d5099d358d
+#EXTINF:-1 tvg-name="VTV7",VTV7 (1280x720 - 1800kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv7/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV8",VTV8 (1920x1080 - 3333kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029316/vtv8/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029316/vtv8/*~hmac=fe15b181836454a0fbe95561bcbddf4de4d33e5c65a74ac525c989dfd58afa18
+#EXTINF:-1 tvg-name="VTV8",VTV8 (1280x720 - 1300kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv8/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV9",VTV9 (1920x1080 - 3273kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029317/vtv9/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029317/vtv9/*~hmac=672d4e4dec96aa20f4ce48c2bd90b6017cdf23c3112bd0444056581ddc144cee
+#EXTINF:-1 tvg-name="VTV9",VTV9 (1280x720 - 1600kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv9/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV10",VTV10 (1920x1080 - 3363kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029314/vtv6/*~hmac=ae54479f93569b612ee29bdf4ce8637f5bd3b616b9d89996a4fae375ea43620f
+#EXTINF:-1 tvg-name="VTV10",VTV10 (1280x720 - 1900kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv6/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV5 Tây Nam Bộ",VTV5 Tây Nam Bộ (1920x1080 - 3310kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029313/vtv5tnb/*~hmac=56780495676212c04324c30e5627f17a6d192cf8b9a5cf8d0d0ded8085cffe1b
+#EXTINF:-1 tvg-name="VTV5 Tây Nam Bộ",VTV5 Tây Nam Bộ (1280x720 - 1400kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv5tnb/master.m3u8
 
-#EXTINF:-1 tvg-name="VTV5 Tây Nguyên",VTV5 Tây Nguyên (1920x1080 - 7562kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029312/vtv5tn/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029312/vtv5tn/*~hmac=4755d5168163279ac83f0bfc4feddb813b5d4431871181fcda4da3df1830e277
+#EXTINF:-1 tvg-name="VTV5 Tây Nguyên",VTV5 Tây Nguyên (1280x720 - 1600kbps)
+https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv5tn/master.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình An Giang",Truyền hình An Giang (1280x720 - 4927kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/ANGIANGTV/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab1 Vie Giải trí",VTVCab1 Vie Giải trí
+https://freem3u.xyz/api/live/play.m3u8?vid=180
 
-#EXTINF:-1 tvg-name="Truyền hình Bắc Ninh",Truyền hình Bắc Ninh (1280x720 - 4927kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/BACGIANGTV/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab15",VTVCab15
+https://freem3u.xyz/api/live/play.m3u8?vid=185
 
-#EXTINF:-1 tvg-name="Truyền hình Công an Nhân dân",Truyền hình Công an Nhân dân (1920x1080 - 5523kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/ANNINHTV/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab19",VTVCab19
+https://freem3u.xyz/api/live/play.m3u8?vid=177
 
-#EXTINF:-1 tvg-name="Truyền hình Đà Nẵng 1",Truyền hình Đà Nẵng 1 (1280x720 - 4017kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/DANANGTV/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab22",VTVCab22 (1920x1080 - 6365kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=188
 
-#EXTINF:-1 tvg-name="Truyền hình Đồng Tháp 1",Truyền hình Đồng Tháp 1 (1280x720 - 4998kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/DONGTHAPTV/index.m3u8
+#EXTINF:-1 tvg-name="VTVcab4",VTVcab4 (1920x1080 - 6358kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=181
 
-#EXTINF:-1 tvg-name="Truyền hình Hà Nội 1",Truyền hình Hà Nội 1 (1280x720 - 4927kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HANOI1TV/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab5 Echannel",VTVCab5 Echannel (1920x1080 - 6358kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=182
 
-#EXTINF:-1 tvg-name="Truyền hình Hà Nội 2",Truyền hình Hà Nội 2 (1280x720 - 4927kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HANOI2/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab7",VTVCab7
+https://xem.TruyenHinh.Click/CoBan/vtvcab7hd/TuyetDoiKhongKinhDoanh.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình Hải Phòng 3",Truyền hình Hải Phòng 3
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HAIDUONGTV/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab8 BiBi TV",VTVCab8 BiBi TV (1920x1080 - 6348kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=178
 
-#EXTINF:-1 tvg-name="Truyền hình Hưng Yên",Truyền hình Hưng Yên (1280x720 - 3847kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HUNGYENTV/index.m3u8
+#EXTINF:-1 tvg-name="VTVCab9",VTVCab9 (1920x1080 - 6358kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=189
 
-#EXTINF:-1 tvg-name="Truyền hình Khánh Hòa",Truyền hình Khánh Hòa (1280x720 - 4017kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/KHANHHOATV/index.m3u8
+#EXTINF:-1 tvg-name="A Sports HD",A Sports HD
+https://playztv-apps.pages.dev/asports/index.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình Nghệ An",Truyền hình Nghệ An (1280x720 - 3902kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/NGHEANTV/index.m3u8
+#EXTINF:-1 tvg-name="All Sports",All Sports
+https://livetv-fa.tubi.video/accdn2/1080p-cc/index.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình Ninh Bình",Truyền hình Ninh Bình (1280x720 - 4927kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/NINHBINHTV/index.m3u8
+#EXTINF:-1 tvg-name="Arena Sport 1",Arena Sport 1
+http://109.105.201.198/ARENASPORT1/video.m3u8?token=test
 
-#EXTINF:-1 tvg-name="Truyền hình Phú Thọ",Truyền hình Phú Thọ (1280x720 - 4927kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/PHUTHOTV/index.m3u8
+#EXTINF:-1 tvg-name="Arena Sport 2",Arena Sport 2
+https://f77zvuxbr89.a.trbcdn.net/reserv12/index.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình Quảng Ninh 1",Truyền hình Quảng Ninh 1 (1280x720 - 3847kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/QUANGNINHTV/index.m3u8
+#EXTINF:-1 tvg-name="Arena Sport 3",Arena Sport 3
+http://109.105.201.198/ARENASPORT3/video.m3u8?token=test
 
-#EXTINF:-1 tvg-name="Truyền hình Quốc phòng Việt Nam",Truyền hình Quốc phòng Việt Nam (960x540 - 2586kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/QPTV/index.m3u8
+#EXTINF:-1 tvg-name="Arena Sport 4",Arena Sport 4
+https://f77zvuxbr89.a.trbcdn.net/reserv14/index.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình Tây Ninh 2",Truyền hình Tây Ninh 2
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/TAYNINHTV/index.m3u8
+#EXTINF:-1 tvg-name="Arena Sport 5",Arena Sport 5
+http://93.155.227.38:90/m3u8/arenasport5.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình Thái Nguyên",Truyền hình Thái Nguyên (1280x720 - 4927kbps)
-https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/THAINGUYENTV/index.m3u8
+#EXTINF:-1 tvg-name="Arena Sport 6",Arena Sport 6
+https://f77zvuxbr89.a.trbcdn.net/reserv16/index.m3u8
 
-#EXTINF:-1 tvg-name="Truyền hình Thanh Hóa",Truyền hình Thanh Hóa (1280x720 - 3902kbps)
-https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/THANHHOATV/index.m3u8
+#EXTINF:-1 tvg-name="Arena Sport 7",Arena Sport 7
+https://f77zvuxbr89.a.trbcdn.net/reserv17/index.m3u8
+
+#EXTINF:-1 tvg-name="Arena Sport 8",Arena Sport 8
+https://tv.liveott.online/ARENA_SPORT_8_HD.m3u8
+
+#EXTINF:-1 tvg-name="Astro Supersport 2 HD",Astro Supersport 2 HD (720x1280 - 1692kbps)
+https://d2hrvno5bw6tg2.cloudfront.net/smrtv-ch02/smil:ch-02.smil/master.m3u8
+
+#EXTINF:-1 tvg-name="Astro Supersport 3 HD",Astro Supersport 3 HD
+http://202.150.161.68/ASSP3/video.m3u8
+
+#EXTINF:-1 tvg-name="Astro Supersport 4 HD",Astro Supersport 4 HD
+http://202.150.161.68/ASSP4/video.m3u8
+
+#EXTINF:-1 tvg-name="Astro Supersport 5 HD",Astro Supersport 5 HD
+http://202.150.161.68/ASSP5/video.m3u8
+
+#EXTINF:-1 tvg-name="Astro Supersport HD",Astro Supersport HD
+https://fl25.moveonjoy.com/BIG_TEN_NETWORK/tracks-v1a1/mono.ts.m3u8
+
+#EXTINF:-1 tvg-name="BEK Sports",BEK Sports
+https://cdn3.wowza.com/5/ZWQ1K2NYTmpFbGsr/BEK-WOWZA-1/smil:BEKPRIMEW.smil/chunklist_b1596000_slENG.m3u8
+
+#EXTINF:-1 tvg-name="Bóng Đá TV",Bóng Đá TV
+https://event-a.fptplay53.net/live/media/su-kien-03/hls_avc_v6/index.m3u8?sign=1792321746-OTE2Mzk2Mw-0-c8c7c7293eae0af4a8f76a5f10b1ddc8
+
+#EXTINF:-1 tvg-name="BT Sport 1",BT Sport 1
+http://212.8.253.117/BTSport1HD/index.m3u8
+
+#EXTINF:-1 tvg-name="BT Sport 2",BT Sport 2
+http://212.8.253.117/BTSport2HD/index.m3u8
+
+#EXTINF:-1 tvg-name="BT Sport 3",BT Sport 3
+http://212.8.253.117/BTSport3HD/index.m3u8
+
+#EXTINF:-1 tvg-name="BT Sport 4 HD",BT Sport 4 HD
+https://eas4.gcdn.co/UKS27/index.m3u8
+
+#EXTINF:-1 tvg-name="Canal + Sport 2",Canal + Sport 2
+https://rgelive.akamaized.net/hls/live/2043151/radiolive/playlist.m3u8
+
+#EXTINF:-1 tvg-name="Canal + Sport 3",Canal + Sport 3
+http://145.239.5.177:8080/537/index.m3u8
+
+#EXTINF:-1 tvg-name="Canal + Sport 4",Canal + Sport 4
+https://cdn-global.lolokoko.tv/canalplussport4.stream/chunks.m3u8
+
+#EXTINF:-1 tvg-name="CBS Sports Network",CBS Sports Network (1920x1080 - 5254kbps)
+https://xumo-xumoent-vc-122-sjv70.fast.nbcuni.com/live/master.m3u8
+
+#EXTINF:-1 tvg-name="DigiSport 1 HD",DigiSport 1 HD
+http://45.90.106.98/digisport1/index.m3u8
+
+#EXTINF:-1 tvg-name="DigiSport 2 HD",DigiSport 2 HD
+https://lbgo.bozztv.com/ssh101/ssh101/digisport222/playlist.m3u8
+
+#EXTINF:-1 tvg-name="DigiSport 3 HD",DigiSport 3 HD
+http://45.90.106.98/digisport3/index.m3u8
+
+#EXTINF:-1 tvg-name="Dubai Sports",Dubai Sports
+https://dmidspta.cdn.mgmlcdn.com/dubaisports/smil:dubaisports.stream.smil/chunklist.m3u8
+
+#EXTINF:-1 tvg-name="Dubai Sports 2",Dubai Sports 2
+https://dmitwlvvll.cdn.mangomolo.com/dubaisportshd/smil:dubaisportshd.smil/chunklist_b1600000.m3u8
+
+#EXTINF:-1 tvg-name="Dubai Sports 3",Dubai Sports 3
+https://dmitwlvvll.cdn.mangomolo.com/dubaisportshd5/smil:dubaisportshd5.smil/chunklist_b1600000.m3u8
+
+#EXTINF:-1 tvg-name="EDGE Sport",EDGE Sport
+https://edgesports-sportstribal.amagi.tv/playlist.m3u8
+
+#EXTINF:-1 tvg-name="ESPN News",ESPN News
+https://fl1.moveonjoy.com/ESPN_NEWS/index.m3u8
+
+#EXTINF:-1 tvg-name="ESPN VIVO",ESPN VIVO
+https://new.m3u8.one/espn/tracks-v1a1/mono.m3u8
+
+#EXTINF:-1 tvg-name="ESPN4",ESPN4
+https://apollo.production-public.tubi.io/live/ac-nhl.m3u8
+
+#EXTINF:-1 tvg-name="ESPN5",ESPN5
+http://fl7.moveonjoy.com/SEC_NETWORK/index.m3u8
+
+#EXTINF:-1 tvg-name="ESPN6",ESPN6
+https://super-cdn.link/espn6/index.m3u8
+
+#EXTINF:-1 tvg-name="Euro Sport",Euro Sport
+https://cors-proxy.cooks.fyi/http://151.80.18.177:86/Eurosport_HD/tracks-v1a1/mono.m3u8
+
+#EXTINF:-1 tvg-name="Euro Sport 2",Euro Sport 2
+https://cors-proxy.cooks.fyi/http://151.80.18.177:86/Eurosport_2_HD/index.m3u8
+
+#EXTINF:-1 tvg-name="Fight Sports",Fight Sports (1280x720 - 3805kbps)
+https://a-cdn.klowdtv.com/live2/fight_720p/playlist.m3u8
+
+#EXTINF:-1 tvg-name="Fite Sports",Fite Sports (1280x720 - 2147kbps)
+https://a-cdn.klowdtv.com/live2/fite247_720p/playlist.m3u8
+
+#EXTINF:-1 tvg-name="FOX Sports 1",FOX Sports 1 (1920x1080 - 4716kbps)
+https://d1jzu95oc8fgt3.cloudfront.net/FOX_Sports.m3u8
+
+#EXTINF:-1 tvg-name="HTV Thể Thao",HTV Thể Thao
+https://1011154949.vnns.net/CDN-FPT02/HTV-THETHAO-HD-1080p/playlist.m3u8
+
+#EXTINF:-1 tvg-name="HTV Thuần Việt",HTV Thuần Việt (1920x1080 - 6365kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=13
+
+#EXTINF:-1 tvg-name="HTV1",HTV1 (1920x1080 - 6365kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=190
+
+#EXTINF:-1 tvg-name="HTV2",HTV2 (1920x1080 - 4156kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=191
+
+#EXTINF:-1 tvg-name="HTV3",HTV3 (1920x1080 - 6185kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=192
+
+#EXTINF:-1 tvg-name="HTV4",HTV4
+https://dethich.pw/htv4/index.m3u8
+
+#EXTINF:-1 tvg-name="HTV5",HTV5 (1920x1080 - 6438kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=151
+
+#EXTINF:-1 tvg-name="HTV7",HTV7 (1920x1080 - 6358kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=193
+
+#EXTINF:-1 tvg-name="HTV9",HTV9 (1920x1080 - 6348kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=194
+
+#EXTINF:-1 tvg-name="HTVC Ca Nhạc",HTVC Ca Nhạc
+https://freem3u.xyz/api/live/play.m3u8?vid=14
+
+#EXTINF:-1 tvg-name="HTVC Du Lịch",HTVC Du Lịch (1920x1080 - 6358kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=133
+
+#EXTINF:-1 tvg-name="HTVC Gia Đình",HTVC Gia Đình (1920x1080 - 6175kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=11
+
+#EXTINF:-1 tvg-name="HTVC Phim",HTVC Phim (1920x1080 - 6358kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=15
+
+#EXTINF:-1 tvg-name="HTVC Phụ Nữ",HTVC Phụ Nữ (1920x1080 - 6365kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=12
+
+#EXTINF:-1 tvg-name="HTVC Plus",HTVC Plus (1920x1080 - 6185kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=132
+
+#EXTINF:-1 tvg-name="SCTV Phim Tổng hợp",SCTV Phim Tổng hợp
+https://vmttv.dpdns.org/VTVGo/?sctvphim
+
+#EXTINF:-1 tvg-name="SCTV1",SCTV1
+https://vmttv.dpdns.org/VTVGo/?sctv1
+
+#EXTINF:-1 tvg-name="SCTV10",SCTV10
+https://vmttv.dpdns.org/VTVGo/?sctv10
+
+#EXTINF:-1 tvg-name="SCTV11",SCTV11
+https://vmttv.dpdns.org/VTVGo/?sctv11
+
+#EXTINF:-1 tvg-name="SCTV12",SCTV12
+https://vmttv.dpdns.org/VTVGo/?sctv12
+
+#EXTINF:-1 tvg-name="SCTV13",SCTV13
+https://vmttv.dpdns.org/VTVGo/?sctv13
+
+#EXTINF:-1 tvg-name="SCTV14",SCTV14
+https://vmttv.dpdns.org/VTVGo/?sctv14
+
+#EXTINF:-1 tvg-name="SCTV16",SCTV16
+https://vmttv.dpdns.org/VTVGo/?sctv16
+
+#EXTINF:-1 tvg-name="SCTV18",SCTV18
+https://vmttv.dpdns.org/VTVGo/?sctv18
+
+#EXTINF:-1 tvg-name="SCTV19- Kênh Thiếu nhi đặc sắc",SCTV19- Kênh Thiếu nhi đặc sắc
+https://vmttv.dpdns.org/VTVGo/?sctv19
+
+#EXTINF:-1 tvg-name="SCTV2",SCTV2 (1920x1080 - 6365kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=201
+
+#EXTINF:-1 tvg-name="SCTV20- Kênh Âm nhạc tương tác",SCTV20- Kênh Âm nhạc tương tác
+https://vmttv.dpdns.org/VTVGo/?sctv20
+
+#EXTINF:-1 tvg-name="SCTV21",SCTV21
+https://vmttv.dpdns.org/VTVGo/?sctv21
+
+#EXTINF:-1 tvg-name="SCTV22 HD",SCTV22 HD
+https://hoiquan.dpdns.org/VTVGo/?sctv22
+
+#EXTINF:-1 tvg-name="SCTV3",SCTV3
+https://vmttv.dpdns.org/VTVGo/?sctv3
+
+#EXTINF:-1 tvg-name="SCTV4",SCTV4
+https://vmttv.dpdns.org/VTVGo/?sctv4
+
+#EXTINF:-1 tvg-name="SCTV5",SCTV5
+https://vmttv.dpdns.org/VTVGo/?sctv5
+
+#EXTINF:-1 tvg-name="SCTV6",SCTV6 (1920x1080 - 6365kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=232
+
+#EXTINF:-1 tvg-name="SCTV7",SCTV7
+https://vmttv.dpdns.org/VTVGo/?sctv7
+
+#EXTINF:-1 tvg-name="SCTV8",SCTV8
+https://vmttv.dpdns.org/VTVGo/?sctv8
+
+#EXTINF:-1 tvg-name="SCTV9",SCTV9
+https://vmttv.dpdns.org/VTVGo/?sctv9
+
+#EXTINF:-1 tvg-name="THVL1 HD",THVL1 HD (1920x1080 - 7575kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=25
+
+#EXTINF:-1 tvg-name="THVL2 HD",THVL2 HD (1920x1080 - 6348kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=26
+
+#EXTINF:-1 tvg-name="THVL3 HD",THVL3 HD (1920x1080 - 6348kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=219
+
+#EXTINF:-1 tvg-name="THVL4 HD",THVL4 HD (1920x1080 - 6348kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=220
+
+#EXTINF:-1 tvg-name="THVL5 HD",THVL5 HD (1920x1080 - 6365kbps)
+https://freem3u.xyz/api/live/play.m3u8?vid=91
+
+#EXTINF:-1 tvg-name="Yeah1TV VTVCab17",Yeah1TV VTVCab17
+https://toiyeuvietnam.dpdns.org/TuyetDoiKhongKinhDoanh/vtvcab17-trending-tv/KenhCoBan.m3u8
