@@ -1,0 +1,62 @@
+name: Auto Scan & Update M3U
+
+on:
+  schedule:
+    # 01:00 sáng VN (UTC+7)
+    - cron: '0 18 * * *'
+    # 13:00 chiều VN (UTC+7)
+    - cron: '0 6 * * *'
+  # Cho phép bấm chạy thủ công từ tab Actions để test
+  workflow_dispatch:
+
+jobs:
+  scan-and-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      # Chạy script cào VTVGo
+      - name: Run VTVGo Scanner
+        run: bun run scripts/update-vtvgo.js
+        env:
+          NODE_ENV: production
+
+      # Chạy script cào XemTV
+      - name: Run XemTV Scanner
+        run: bun run scripts/update-xemtv.js
+        env:
+          NODE_ENV: production
+
+      # Kiểm tra xem file m3u có bị rỗng không trước khi commit
+      - name: Verify and Commit
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Đếm số dòng EXTINF trong file
+          COUNT=$(grep -c "#EXTINF" tvPremium.m3u || true)
+          
+          if [ "$COUNT" -gt 0 ]; then
+            git add tvPremium.m3u
+            if ! git diff --cached --quiet; then
+              git commit -m "Auto-update tvPremium.m3u [$(date +'%Y-%m-%d %H:%M')]"
+              git push
+            else
+              echo "Không có thay đổi nào trong tvPremium.m3u, bỏ qua commit."
+            fi
+          else
+            echo "LỖI: File tvPremium.m3u rỗng (0 kênh). Không commit để bảo vệ file cũ!"
+            exit 1
+          fi
