@@ -1,86 +1,42 @@
-name: Auto Update M3U Playlist (VTVGo + XemTV)
+name: Auto Smart Replace & Commit M3U
 
 on:
-  # 1. Chạy tự động theo lịch (Cron)
-  # GitHub Actions dùng giờ UTC. Việt Nam là UTC+7.
-  # 01:00 VN = 18:00 UTC (ngày hôm trước)
-  # 13:00 VN = 06:00 UTC
   schedule:
-    - cron: '0 18 * * *' # 01:00 sáng VN
-    - cron: '0 6 * * *'  # 13:00 chiều VN
-
-  # 2. Cho phép bấm chạy thủ công từ tab Actions
+    # 01:00 VN = 18:00 UTC (hôm trước)
+    - cron: '0 18 * * *'
+    # 13:00 VN = 06:00 UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 jobs:
-  update-playlist:
+  smart-replace:
     runs-on: ubuntu-latest
 
-    # Cấp quyền cho bot được phép ghi đè file và commit
-    permissions:
-      contents: write
-
     steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      # FIX LỖI: Cannot read properties of null (reading 'edgesOut')
-      - name: ⬆️ Upgrade npm to fix Arborist crash
-        run: npm install -g npm@11.6.0
-
-      # FIX LỖI: ERESOLVE (xung đột vite vs esbuild)
-      - name: 📦 Install Dependencies
+      - name: 🚀 Trigger Smart Replace API
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci --legacy-peer-deps
+          echo "Đang kích hoạt Smart Replace qua Server API..."
+          
+          # Gọi API Smart Replace của bạn
+          # (Nhớ thay thế URL bên dưới bằng link server thật của bạn, ví dụ: https://app-cua-ban.onrender.com)
+          
+          RESPONSE=$(curl -s -X POST "https://your-server-url.com/api/smart-replace" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "token": "${{ secrets.GH_TOKEN }}",
+              "repo": "thanhthovn/tvPremium",
+              "branch": "main",
+              "channelUrlFile": "channel_url.txt",
+              "m3uFile": "tvPremium.m3u"
+            }')
+          
+          echo "Kết quả từ Server:"
+          echo "$RESPONSE"
+          
+          # Kiểm tra xem API trả về thành công không
+          if echo "$RESPONSE" | grep -q '"success":true'; then
+            echo "✅ Smart Replace thành công!"
           else
-            npm install --legacy-peer-deps
+            echo "❌ Smart Replace thất bại. Vui lòng kiểm tra log Server."
+            exit 1
           fi
-
-      # 🚀 CHẠY SCRAPERS
-      - name: 🚀 Run Scrapers (VTVGo & XemTV)
-        run: |
-          echo "========================================="
-          echo "🚀 Đang chạy quét VTVGo..."
-          echo "========================================="
-          node scripts/update-vtvgo.js || echo "⚠️ VTVGo lỗi, bỏ qua bước này."
-          
-          echo "========================================="
-          echo "🚀 Đang chạy quét XemTV..."
-          echo "========================================="
-          node scripts/update-xemtv.js || echo "⚠️ XemTV lỗi, bỏ qua bước này."
-
-      # 🔍 KIỂM TRA XEM FILE CÓ THAY ĐỔI KHÔNG
-      - name: 🔍 Check for changes
-        id: git-check
-        run: |
-          if git diff --exit-code tvPremium.m3u > /dev/null; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "✅ Không có thay đổi nào trong file tvPremium.m3u."
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "🔥 Phát hiện thay đổi trong file tvPremium.m3u!"
-          fi
-
-      # 💾 COMMIT VÀ PUSH NẾU CÓ THAY ĐỔI
-      - name: 💾 Commit and Push changes
-        if: steps.git-check.outputs.changed == 'true'
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add tvPremium.m3u
-          
-          # Lấy thời gian hiện tại theo giờ VN
-          COMMIT_MSG="Auto-update tvPremium.m3u - $(TZ='Asia/Ho_Chi_Minh' date +'%Y-%m-%d %H:%M:%S') (VN)"
-          
-          git commit -m "$COMMIT_MSG"
-          git push
-
-      - name: ✅ Done (No changes)
-        if: steps.git-check.outputs.changed == 'false'
-        run: echo "Không có thay đổi nào trong tvPremium.m3u. Bỏ qua commit."
