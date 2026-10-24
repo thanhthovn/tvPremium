@@ -222,6 +222,9 @@ export default function App() {
     commitUrl?: string;
   } | null>(null);
 
+  // 🆕 Lưu nội dung M3U mới sau smart replace
+  const [smartReplaceM3uContent, setSmartReplaceM3uContent] = useState<string | null>(null);
+
   const openGhModal = () => {
     setTempToken(ghToken);
     setTempRepo(ghRepo);
@@ -988,7 +991,6 @@ export default function App() {
     );
   };
 
-  /* ===== SMART REPLACE — FIX: bỏ setSelectedStream + addLog ===== */
   const loadIptvOriFromGitHub = async (targetFile = 'iptv_ori.m3u') => {
     setIsLoadingIptvOri(true);
     try {
@@ -1283,7 +1285,7 @@ export default function App() {
     }
   };
 
-  /* ===== SMART REPLACE — Gọi server route ===== */
+  /* ===== SMART REPLACE ===== */
   const runSmartReplace = async () => {
     if (isSmartReplacing) return;
     const token = (localStorage.getItem('gh_token') || ghToken || '').trim();
@@ -1296,6 +1298,7 @@ export default function App() {
     setIsSmartReplacing(true);
     setSmartReplaceSummary(null);
     setSmartReplaceLog([]);
+    setSmartReplaceM3uContent(null);  // 🆕 reset
     setSmartReplaceProgress({ done: 0, total: 0, current: 'Đang khởi động...' });
     setScanError(null);
     setScanStatus('🚀 Đang đọc channel_url.txt và tvPremium.m3u từ GitHub...');
@@ -1333,6 +1336,12 @@ export default function App() {
         githubSynced: data.githubSynced,
         commitUrl: data.commitUrl,
       });
+
+      // 🆕 Lưu nội dung M3U mới nếu có thay đổi
+      if (data.m3uContent) {
+        setSmartReplaceM3uContent(data.m3uContent);
+      }
+
       setSmartReplaceLog(data.results || []);
       setSmartReplaceProgress({ done: data.total, total: data.total, current: '' });
       setScanStatus(data.message || 'Hoàn tất!');
@@ -1536,6 +1545,60 @@ export default function App() {
                 <ExternalLink className="w-3 h-3 inline mr-1" />
                 Xem commit trên GitHub
               </a>
+            )}
+
+            {/* 🆕 Nút tải + copy M3U sau smart replace */}
+            {smartReplaceM3uContent && (
+              <div className="space-y-1.5 pt-1">
+                <button
+                  onClick={() => {
+                    const filename = `tvPremium-smart-${new Date().toISOString().slice(0, 10)}.m3u`;
+                    const blob = new Blob([smartReplaceM3uContent], {
+                      type: 'application/vnd.apple.mpegurl;charset=utf-8',
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+                  }}
+                  className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  Tải {`tvPremium-smart-${new Date().toISOString().slice(0, 10)}.m3u`}
+                </button>
+                
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(smartReplaceM3uContent);
+                    setCopiedUrl('smart-m3u');
+                    setTimeout(() => setCopiedUrl(null), 2000);
+                  }}
+                  className="w-full py-1.5 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  {copiedUrl === 'smart-m3u' ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      Đã copy M3U
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      Copy nội dung M3U
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* 🆕 Thông báo khi không có thay đổi */}
+            {smartReplaceSummary && smartReplaceSummary.replaced === 0 && (
+              <p className="text-[10px] text-center text-slate-400 italic pt-1">
+                Không có link nào thay đổi — không cần tải lại.
+              </p>
             )}
           </div>
 

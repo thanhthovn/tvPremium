@@ -50,12 +50,12 @@ const SLUG_ALIASES: Record<string, string[]> = {
   quangtri: ['Quảng Trị', 'Quang Tri', 'QRT'],
   laocai: ['Lào Cai', 'Lao Cai', 'LCTV'],
   tuyenquang: ['Tuyên Quang', 'Tuyen Quang', 'TQTV'],
-  cantho1: ['Cần Thơ 1', 'Can Tho 1', 'CT1'],
-  cantho2: ['Cần Thơ 2', 'Can Tho 2', 'CT2'],
-  cantho3: ['Cần Thơ 3', 'Can Tho 3', 'CT3'],
-  dongnai1: ['Đồng Nai 1', 'Dong Nai 1', 'DN1', 'ĐỒNG NAI 1'],
-  dongnai2: ['Đồng Nai 2', 'Dong Nai 2', 'DN2', 'ĐỒNG NAI 2'],
-  dongnai3: ['Đồng Nai 3', 'Dong Nai 3', 'DN3', 'ĐỒNG NAI 3'],
+  cantho1: ['Cần Thơ 1', 'Can Tho 1', 'CT1', 'Cần Thơ', 'THTPCT1'],
+  cantho2: ['Cần Thơ 2', 'Can Tho 2', 'CT2', 'THTPCT2'],
+  cantho3: ['Cần Thơ 3', 'Can Tho 3', 'CT3', 'THTPCT3'],
+  dongnai1: ['Đồng Nai 1', 'Dong Nai 1', 'ĐN1', 'ĐỒNG NAI 1', 'Đồng Nai'],
+  dongnai2: ['Đồng Nai 2', 'Dong Nai 2', 'ĐN2', 'ĐỒNG NAI 2'],
+  dongnai3: ['Đồng Nai 3', 'Dong Nai 3', 'ĐN3', 'ĐỒNG NAI 3'],
   lamdong1: ['Lâm Đồng', 'Lâm Đồng 1', 'LTV1', 'LTV 1'],
   lamdong2: ['LTV2', 'LTV 2', 'Lâm Đồng 2', 'Bình Thuận'],
   vinhlong1: ['Vĩnh Long 1', 'THVL1', 'THVL 1'],
@@ -66,24 +66,15 @@ const SLUG_ALIASES: Record<string, string[]> = {
   angiang1: ['An Giang 1', 'ATV1', 'ATV 1'],
   angiang2: ['An Giang 2', 'ATV2', 'ATV 2'],
   angiang3: ['An Giang 3', 'ATV3', 'ATV 3'],
-  cantho1: ['Cần Thơ 1', 'CT1', 'Cần Thơ', 'THTPCT1'],
-  cantho2: ['Cần Thơ 2', 'CT2', 'THTPCT2'],
-  cantho3: ['Cần Thơ 3', 'CT3', 'THTPCT3'],
   hanoi1: ['Hà Nội 1', 'HN1', 'Hà Nội'],
   hanoi2: ['Hà Nội 2', 'HN2'],
   haiphong: ['Hải Phòng', 'HP', 'Hải Phòng 1', 'THP'],
   haiphong3: ['Hải Phòng 3', 'HP3'],
-  dongnai1: ['Đồng Nai 1', 'DN1', 'Đồng Nai', 'ĐN1'],
-  dongnai2: ['Đồng Nai 2', 'DN2', 'ĐN2'],
-  dongnai3: ['Đồng Nai 3', 'DN3', 'ĐN3'],
-  danang1: ['Đà Nẵng 1', 'DN1', 'Đà Nẵng'],
-  danang2: ['Đà Nẵng 2', 'DN2'],
+  danang1: ['Đà Nẵng 1', 'DN1', 'Đà Nẵng', 'DanangTV1'],
   quangninh1: ['Quảng Ninh 1', 'QTV1', 'Quảng Ninh'],
-  quangninh3: ['Quảng Ninh 3', 'QTV3'],
   khanhhoa: ['Khánh Hòa', 'KTV', 'Khánh Hòa 1'],
   khanhhoa1: ['Khánh Hòa 1', 'KTV1'],
   quangngai: ['Quảng Ngãi', 'QNgai', 'Quảng Ngãi 1'],
-  quangngai2: ['Quảng Ngãi 2', 'QNgai2'],
   dongthap1: ['Đồng Tháp 1', 'THĐT1', 'Đồng Tháp'],
   dongthap2: ['Đồng Tháp 2', 'THĐT2'],
   tayninh1: ['Tây Ninh 1', 'TN1', 'Tây Ninh'],
@@ -626,8 +617,10 @@ async function startServer() {
 
       // 5. Commit
       let commitUrl, githubSynced = false; const m3uDirty = replaced > 0;
+      let newContent: string | null = null;              // 🆕
+
       if (m3uDirty) {
-        const newContent = '\uFEFF' + lines.join(useCRLF ? '\r\n' : '\n');
+        newContent = '\uFEFF' + lines.join(useCRLF ? '\r\n' : '\n');   // 🆕
         fs.writeFileSync(path.resolve(__dirname, 'tvPremium.m3u'), newContent, 'utf8');
         const getRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${m3uFile}?ref=${cleanBranch}`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
         const sha = getRes.ok ? (await getRes.json()).sha : undefined;
@@ -639,7 +632,16 @@ async function startServer() {
       }
 
       return res.json({
-        success: true, total: slugs.length, replaced, kept, failed, results, m3uDirty, githubSynced, commitUrl,
+        success: true,
+        total: slugs.length,
+        replaced,
+        kept,
+        failed,
+        results,
+        m3uDirty,
+        githubSynced,
+        commitUrl,
+        m3uContent: newContent,                         // 🆕 Trả về nội dung cho client
         message: m3uDirty ? `Đã thay ${replaced} link, giữ ${kept}, lỗi ${failed}.` : `Không có link thay đổi.`
       });
     } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
