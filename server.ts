@@ -3,10 +3,151 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { runVtvgoUpdate } from './scripts/update-vtvgo.js';
+import { runVtvgoUpdate, discoverVtvgoChannels } from './scripts/update-vtvgo.js';
+import { runXemtvUpdate, discoverXemtvChannels as discoverXemtvChannelsHelper, extractXemtvChannelStream } from './scripts/update-xemtv.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const SLUG_TO_NAME: Record<string, string> = {
+  vtv1: 'VTV1', vtv2: 'VTV2', vtv3: 'VTV3', vtv4: 'VTV4', vtv5: 'VTV5',
+  vtv6: 'VTV6', vtv7: 'VTV7', vtv8: 'VTV8', vtv9: 'VTV9', vtv10: 'VTV10',
+  vtv5tnb: 'VTV5 Tây Nam Bộ', vtv5tn: 'VTV5 Tây Nguyên', antv: 'ANTV', qpvn: 'QPVN',
+  htv1: 'HTV1', htv2: 'HTV2', htv3: 'HTV3', htv4: 'HTV4', htv5: 'HTV5', htv7: 'HTV7', htv9: 'HTV9', htvthethao: 'HTV Thể Thao',
+  lamdong1: 'Lâm Đồng 1', lamdong2: 'Lâm Đồng 2', sctv2: 'SCTV2',
+  vinhlong1: 'Vĩnh Long 1', vinhlong2: 'Vĩnh Long 2', vinhlong3: 'Vĩnh Long 3', vinhlong4: 'Vĩnh Long 4', vinhlong5: 'Vĩnh Long 5',
+  cantho1: 'Cần Thơ 1', cantho2: 'Cần Thơ 2', cantho3: 'Cần Thơ 3',
+  hanoi1: 'Hà Nội 1', hanoi2: 'Hà Nội 2', haiphong: 'Hải Phòng', haiphong3: 'Hải Phòng 3',
+  dongnai1: 'Đồng Nai 1', dongnai2: 'Đồng Nai 2', dongnai3: 'Đồng Nai 3',
+  hue: 'Huế', danang1: 'Đà Nẵng 1', danang2: 'Đà Nẵng 2',
+  caobang: 'Cao Bằng', hatinh: 'Hà Tĩnh', nghean: 'Nghệ An', thanhhoa: 'Thanh Hóa',
+  quangninh1: 'Quảng Ninh 1', quangninh3: 'Quảng Ninh 3',
+  langson: 'Lạng Sơn', sonla: 'Sơn La', dienbien: 'Điện Biên', laichau: 'Lai Châu',
+  angiang1: 'An Giang 1', angiang2: 'An Giang 2', angiang3: 'An Giang 3',
+  camau: 'Cà Mau', dongthap1: 'Đồng Tháp 1', dongthap2: 'Đồng Tháp 2',
+  tayninh1: 'Tây Ninh 1', daklak: 'Đắk Lắk',
+  khanhhoa: 'Khánh Hòa', khanhhoa1: 'Khánh Hòa 1', gialai: 'Gia Lai',
+  quangngai: 'Quảng Ngãi', quangngai2: 'Quảng Ngãi 2',
+  quangtri: 'Quảng Trị', ninhbinh: 'Ninh Bình', hungyen: 'Hưng Yên',
+  bacninh: 'Bắc Ninh', phutho: 'Phú Thọ', thainguyen: 'Thái Nguyên',
+  laocai: 'Lào Cai', tuyenquang: 'Tuyên Quang', vietnamtoday: 'Việt Nam Today',
+};
+
+const SLUG_ALIASES: Record<string, string[]> = {
+  hue: ['Huế', 'Hue', 'TRT', 'Truyền hình Huế'],
+  danang2: ['Đà Nẵng 2', 'DN2', 'Danang 2'],
+  caobang: ['Cao Bằng', 'Cao Bang', 'CBTV'],
+  hatinh: ['Hà Tĩnh', 'Ha Tinh', 'HTTV'],
+  quangninh3: ['Quảng Ninh 3', 'QN3'],
+  langson: ['Lạng Sơn', 'Lang Son', 'LSTV'],
+  sonla: ['Sơn La', 'Son La', 'STV'],
+  dienbien: ['Điện Biên', 'Dien Bien', 'ĐTV'],
+  laichau: ['Lai Châu', 'Lai Chau'],
+  camau: ['Cà Mau', 'Ca Mau', 'CMTV'],
+  daklak: ['Đắk Lắk', 'Dak Lak', 'DakLak', 'DRT'],
+  gialai: ['Gia Lai', 'Gia Lai', 'GLTV'],
+  quangngai2: ['Quảng Ngãi 2', 'Quang Ngai 2', 'QNgai2'],
+  quangtri: ['Quảng Trị', 'Quang Tri', 'QRT'],
+  laocai: ['Lào Cai', 'Lao Cai', 'LCTV'],
+  tuyenquang: ['Tuyên Quang', 'Tuyen Quang', 'TQTV'],
+  cantho1: ['Cần Thơ 1', 'Can Tho 1', 'CT1'],
+  cantho2: ['Cần Thơ 2', 'Can Tho 2', 'CT2'],
+  cantho3: ['Cần Thơ 3', 'Can Tho 3', 'CT3'],
+  dongnai1: ['Đồng Nai 1', 'Dong Nai 1', 'DN1'],
+  dongnai2: ['Đồng Nai 2', 'Dong Nai 2', 'DN2'],
+  dongnai3: ['Đồng Nai 3', 'Dong Nai 3', 'DN3'],
+  lamdong1: ['Lâm Đồng', 'Lâm Đồng 1', 'LTV1', 'LTV 1'],
+  lamdong2: ['LTV2', 'LTV 2', 'Lâm Đồng 2', 'Bình Thuận'],
+  vinhlong1: ['Vĩnh Long 1', 'THVL1', 'THVL 1'],
+  vinhlong2: ['Vĩnh Long 2', 'THVL2', 'THVL 2'],
+  vinhlong3: ['Vĩnh Long 3', 'THVL3', 'THVL 3'],
+  vinhlong4: ['Vĩnh Long 4', 'THVL4', 'THVL 4'],
+  vinhlong5: ['Vĩnh Long 5', 'THVL5', 'THVL 5'],
+  angiang1: ['An Giang 1', 'ATV1', 'ATV 1'],
+  angiang2: ['An Giang 2', 'ATV2', 'ATV 2'],
+  angiang3: ['An Giang 3', 'ATV3', 'ATV 3'],
+  cantho1: ['Cần Thơ 1', 'CT1', 'Cần Thơ'],
+  cantho2: ['Cần Thơ 2', 'CT2'],
+  cantho3: ['Cần Thơ 3', 'CT3'],
+  hanoi1: ['Hà Nội 1', 'HN1', 'Hà Nội'],
+  hanoi2: ['Hà Nội 2', 'HN2'],
+  haiphong: ['Hải Phòng', 'HP', 'Hải Phòng 1', 'THP'],
+  haiphong3: ['Hải Phòng 3', 'HP3'],
+  dongnai1: ['Đồng Nai 1', 'DN1', 'Đồng Nai', 'ĐN1'],
+  dongnai2: ['Đồng Nai 2', 'DN2', 'ĐN2'],
+  dongnai3: ['Đồng Nai 3', 'DN3', 'ĐN3'],
+  danang1: ['Đà Nẵng 1', 'DN1', 'Đà Nẵng'],
+  danang2: ['Đà Nẵng 2', 'DN2'],
+  quangninh1: ['Quảng Ninh 1', 'QN1', 'Quảng Ninh'],
+  quangninh3: ['Quảng Ninh 3', 'QN3'],
+  khanhhoa: ['Khánh Hòa', 'KTV', 'Khánh Hòa 1'],
+  khanhhoa1: ['Khánh Hòa 1', 'KTV1'],
+  quangngai: ['Quảng Ngãi', 'QNgai', 'Quảng Ngãi 1'],
+  quangngai2: ['Quảng Ngãi 2', 'QNgai2'],
+  dongthap1: ['Đồng Tháp 1', 'THĐT1', 'Đồng Tháp'],
+  dongthap2: ['Đồng Tháp 2', 'THĐT2'],
+  tayninh1: ['Tây Ninh 1', 'TN1', 'Tây Ninh'],
+  vtv5tnb: ['VTV5 Tây Nam Bộ', 'VTV5 TNB'],
+  vtv5tn: ['VTV5 Tây Nguyên', 'VTV5 TN'],
+  vtv6: ['VTV6', 'VTV Cần Thơ', 'VTV6 Cần Thơ'],
+  htvthethao: ['HTV Thể Thao', 'HTV The Thao', 'HTVTT'],
+  vietnamtoday: ['Việt Nam Today', 'Vietnam Today', 'VTV Vietnam Today'],
+};
+
+function getSearchKeys(slug: string, displayName: string): string[] {
+  const keys = new Set<string>();
+  const add = (s: string) => {
+    const k = normalizeKey(s);
+    if (k) keys.add(k);
+  };
+  add(displayName);
+  add(slug);
+  const aliases = SLUG_ALIASES[slug] || [];
+  for (const a of aliases) add(a);
+  return Array.from(keys);
+}
+
+function normalizeKey(s: string): string {
+  if (!s) return '';
+  let t = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  t = t.replace(/đ/g, 'd').replace(/Đ/g, 'd');
+  t = t.replace(/\b(hd|sd|fullhd|fhd|uhd|4k|8k)\b/g, '');
+  t = t.replace(/[^a-z0-9]/g, '');
+  return t;
+}
+
+function qualityScore(probe: { height?: number; bitrate?: number } | null | undefined): number {
+  if (!probe) return 0;
+  return (probe.height || 0) * 10_000_000 + (probe.bitrate || 0);
+}
+
+async function probeManifest(url: string, referer: string, timeoutMs = 5000): Promise<{ width: number; height: number; bitrate: number; resolutionStr: string; bitrateKbps: string; } | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Referer': referer },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    let bestW = 0, bestH = 0, bestBr = 0;
+    const regex = /#EXT-X-STREAM-INF:([^\r\n]+)/g;
+    let m;
+    while ((m = regex.exec(text)) !== null) {
+      const line = m[1];
+      const r = line.match(/RESOLUTION=(\d+)x(\d+)/i);
+      const b = line.match(/BANDWIDTH=(\d+)/i);
+      const w = r ? parseInt(r[1], 10) : 0;
+      const h = r ? parseInt(r[2], 10) : 0;
+      const br = b ? parseInt(b[1], 10) : 0;
+      if (h > bestH || (h === bestH && br > bestBr)) { bestH = h; bestW = w; }
+      if (br > bestBr) bestBr = br;
+    }
+    if (bestH > 0 || bestBr > 0) {
+      return { width: bestW, height: bestH, bitrate: bestBr, resolutionStr: bestH > 0 ? `${bestW}x${bestH}` : 'HD', bitrateKbps: bestBr > 0 ? `${Math.round(bestBr / 1000)}kbps` : '' };
+    }
+  } catch { /* ignore */ }
+  return null;
+}
 
 async function startServer() {
   const app = express();
@@ -15,1186 +156,553 @@ async function startServer() {
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-  // Helper: Dean Edwards P.A.C.K.E.R unpacker
   function unpackJavaScript(code: string): string {
     const packerRegex = /eval\(function\(p,a,c,k,e,d\)\{[\s\S]*?\}\(([\s\S]*?)\)\)/g;
-    let match;
-    let unpackedTotal = '';
-
+    let match, unpackedTotal = '';
     while ((match = packerRegex.exec(code)) !== null) {
       try {
-        const payload = match[1];
-        // Split args: p, a, c, k, e, d
-        // We use a safe regex-based evaluation without running arbitrary untrusted code
-        const parts = payload.split(/,\s*/);
+        const parts = match[1].split(/,\s*/);
         if (parts.length >= 4) {
-          // Extract dictionary and replace keywords
-          const p = parts[0].replace(/^['"]|['"]$/g, '');
-          const a = parseInt(parts[1], 10) || 62;
-          const c = parseInt(parts[2], 10);
-          const kStr = parts.slice(3).join(',');
+          const p = parts[0].replace(/^['"]|['"]$/g, ''); const a = parseInt(parts[1], 10) || 62; const c = parseInt(parts[2], 10); const kStr = parts.slice(3).join(',');
           const kMatches = kStr.match(/['"](.*?)['"]\.split/);
           if (kMatches && kMatches[1]) {
-            const k = kMatches[1].split('|');
-            let result = p;
-            for (let i = c - 1; i >= 0; i--) {
-              if (k[i]) {
-                const word = (i).toString(a);
-                result = result.replace(new RegExp(`\\b${word}\\b`, 'g'), k[i]);
-              }
-            }
+            const k = kMatches[1].split('|'); let result = p;
+            for (let i = c - 1; i >= 0; i--) { if (k[i]) result = result.replace(new RegExp(`\\b${(i).toString(a)}\\b`, 'g'), k[i]); }
             unpackedTotal += '\n' + result;
           }
         }
-      } catch {
-        // Ignore unpack failure
-      }
+      } catch { /* ignore */ }
     }
     return unpackedTotal;
   }
 
-  // Helper: Deep extract all m3u8 occurrences from text
   function extractM3u8FromText(text: string, baseUrl?: string): { url: string; sourceType: string }[] {
     const results: { url: string; sourceType: string }[] = [];
     const seen = new Set<string>();
-
     const addStream = (url: string, sourceType: string) => {
-      let clean = url.replace(/\\\//g, '/').replace(/\\"/g, '"').trim();
-      // Remove trailing quotes or brackets if matched greedily
-      clean = clean.replace(/['"<>);]+$/, '');
-      if (clean && !seen.has(clean)) {
-        seen.add(clean);
-        results.push({ url: clean, sourceType });
-      }
+      let clean = url.replace(/\\\//g, '/').replace(/\\"/g, '"').trim().replace(/['"<>);]+$/, '');
+      if (clean && !seen.has(clean)) { seen.add(clean); results.push({ url: clean, sourceType }); }
     };
-
-    // 1. Direct and escaped absolute URLs
     const absRegex = /(https?:[\/\\]{1,2}[^\s"'<>\\{}|^`]+?\.m3u8(?:\?[^\s"'<>\\{}|^`]*)?)/gi;
     let match;
-    while ((match = absRegex.exec(text)) !== null) {
-      addStream(match[1], 'direct-regex');
-    }
-
-    // 2. Relative URLs
+    while ((match = absRegex.exec(text)) !== null) addStream(match[1], 'direct-regex');
     if (baseUrl) {
       try {
         const base = new URL(baseUrl);
         const relRegex = /["']([^"'<>\s]+\.m3u8(?:\?[^"'<>\s]*)?)["']/gi;
         while ((match = relRegex.exec(text)) !== null) {
-          const rawRel = match[1].replace(/\\\//g, '/');
-          try {
-            const resolved = new URL(rawRel, base).toString();
-            addStream(resolved, 'relative-regex');
-          } catch {
-            // Ignore
-          }
+          try { addStream(new URL(match[1].replace(/\\\//g, '/'), base).toString(), 'relative-regex'); } catch { /* ignore */ }
         }
-      } catch {
-        // Base parsing failed
-      }
+      } catch { /* ignore */ }
     }
-
-    // 3. URL-encoded m3u8 (e.g. %2F%2F...m3u8 or https%3A%2F%2F...%2Fmaster.m3u8)
     const encodedRegex = /(https?%3A%2F%2F[^\s"'<>]+?\.m3u8(?:%3F[^\s"'<>]*)?)/gi;
-    while ((match = encodedRegex.exec(text)) !== null) {
+    while ((match = encodedRegex.exec(text)) !== null) { try { addStream(decodeURIComponent(match[1]), 'url-decoded'); } catch { /* ignore */ } }
+    if (text.includes('\\u002f') || text.includes('\\u002F')) {
       try {
-        const decoded = decodeURIComponent(match[1]);
-        addStream(decoded, 'url-decoded');
-      } catch {
-        // Ignore
-      }
+        const unescaped = text.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+        for (const s of extractM3u8FromText(unescaped, baseUrl)) addStream(s.url, 'unicode-unescaped');
+      } catch { /* ignore */ }
     }
-
-    // 4. Unicode escapes (\u0068\u0074\u0074\u0070...)
-    if (text.includes('\\u002f') || text.includes('\\u002F') || text.includes('\\u006d\\u0033\\u0075\\u0038')) {
-      try {
-        const unescaped = text.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => 
-          String.fromCharCode(parseInt(code, 16))
-        );
-        const unescapedFound = extractM3u8FromText(unescaped, baseUrl);
-        for (const s of unescapedFound) {
-          addStream(s.url, 'unicode-unescaped');
-        }
-      } catch {
-        // Ignore
-      }
-    }
-
-    // 5. Look for base64 encoded m3u8
     const b64Regex = /([A-Za-z0-9+/=]{20,})/g;
     let bMatch;
     while ((bMatch = b64Regex.exec(text)) !== null) {
       try {
         const decoded = Buffer.from(bMatch[1], 'base64').toString('utf-8');
-        if (decoded.includes('.m3u8')) {
-          const subFound = extractM3u8FromText(decoded, baseUrl);
-          for (const s of subFound) {
-            addStream(s.url, 'base64-decoded');
-          }
-        }
-      } catch {
-        // Not valid base64
-      }
+        if (decoded.includes('.m3u8')) for (const s of extractM3u8FromText(decoded, baseUrl)) addStream(s.url, 'base64-decoded');
+      } catch { /* ignore */ }
     }
-
-    // 6. Dean Edwards Packed JavaScript
     if (text.includes('eval(function(p,a,c,k,e,d)')) {
       const unpacked = unpackJavaScript(text);
-      if (unpacked) {
-        const unpackedFound = extractM3u8FromText(unpacked, baseUrl);
-        for (const s of unpackedFound) {
-          addStream(s.url, 'unpacked-js');
-        }
-      }
+      if (unpacked) for (const s of extractM3u8FromText(unpacked, baseUrl)) addStream(s.url, 'unpacked-js');
     }
-
     return results;
   }
 
-  // API: Deep Server-side M3U8 extraction
   app.all('/api/extract-m3u8', async (req, res) => {
     const targetUrl = (req.method === 'POST' ? req.body.url : req.query.url) as string;
-
-    if (!targetUrl || typeof targetUrl !== 'string') {
-      return res.status(400).json({ error: 'Vui lòng cung cấp tham số url' });
-    }
-
+    if (!targetUrl || typeof targetUrl !== 'string') return res.status(400).json({ error: 'Vui lòng cung cấp tham số url' });
     let normalizedUrl = targetUrl.trim();
-    if (!/^https?:\/\//i.test(normalizedUrl)) {
-      normalizedUrl = 'https://' + normalizedUrl;
-    }
-
-    // Direct m3u8 URL entered
+    if (!/^https?:\/\//i.test(normalizedUrl)) normalizedUrl = 'https://' + normalizedUrl;
     if (normalizedUrl.toLowerCase().includes('.m3u8')) {
       let sourceTag = 'Direct M3U8';
       if (normalizedUrl.includes('live-vtv-aws')) sourceTag = 'VTVGo Live (AWS CloudFront CDN)';
       else if (normalizedUrl.includes('akamaized.net')) sourceTag = 'VTVGo Live (Akamai CDN)';
       else if (normalizedUrl.includes('vtvgolive')) sourceTag = 'VTVGo Live (VTV Digital CDN)';
       else if (normalizedUrl.includes('vnetwork')) sourceTag = 'VTVGo Live (VNetwork CDN)';
-
-      return res.json({
-        success: true,
-        streams: [{ url: normalizedUrl, sourceType: sourceTag }],
-        count: 1,
-        source: normalizedUrl,
-        message: `Đã nhận diện liên kết .m3u8 (${sourceTag})`
-      });
+      return res.json({ success: true, streams: [{ url: normalizedUrl, sourceType: sourceTag }], count: 1, source: normalizedUrl, message: `Đã nhận diện liên kết .m3u8 (${sourceTag})` });
     }
-
-    // Special Platform: VTVGo (https://vtvgo.vn/channel/13, vtvgo.vn/channel/...)
-    if (normalizedUrl.includes('vtvgo.vn')) {
+    if (normalizedUrl.includes('xemtv.net')) {
+      const cleanRootUrl = normalizedUrl.replace(/\/+$/, '').toLowerCase();
+      if (cleanRootUrl === 'https://hd1.xemtv.net' || cleanRootUrl === 'http://hd1.xemtv.net' || cleanRootUrl === 'https://xemtv.net') {
+        try {
+          const updateRes = await runXemtvUpdate({ limit: 120 });
+          const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
+          let extracted: any[] = [];
+          if (fs.existsSync(targetPath)) {
+            const lines = fs.readFileSync(targetPath, 'utf8').split(/\r?\n/); let curName = '';
+            for (const l of lines) {
+              const t = l.trim();
+              if (t.startsWith('#EXTINF:')) { const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/); curName = m ? m[1].trim() : 'Kênh XemTV'; } 
+              else if (t.startsWith('http')) extracted.push({ url: t, sourceType: curName, channelName: curName, pageTitle: `XemTV - ${curName}` });
+            }
+          }
+          return res.json({ success: true, streams: extracted, count: extracted.length, totalChannelsFound: updateRes.channelsDiscovered, source: normalizedUrl, pageTitle: `XemTV Portal (${updateRes.channelsDiscovered} kênh)`, message: `Đã quét https://hd1.xemtv.net/: Phát hiện ${updateRes.channelsDiscovered} kênh và tự động dò ra ${extracted.length} luồng m3u8 chất lượng cao nhất!` });
+        } catch (e: any) { console.error('Lỗi khi quét portal xemtv.net:', e.message); }
+      }
       try {
-        let channelId = '13';
-        const channelMatch = normalizedUrl.match(/\/channel\/([a-zA-Z0-9]+)/i);
-        if (channelMatch) {
-          channelId = channelMatch[1];
-        } else {
-          const idMatch = normalizedUrl.match(/[-_](\d+)\.html/i);
-          if (idMatch) channelId = idMatch[1];
+        const singleRes = await extractXemtvChannelStream(normalizedUrl);
+        if (singleRes && singleRes.success && singleRes.streamUrl) {
+          const titleMatch = normalizedUrl.match(/kenh-([a-zA-Z0-9_-]+)\.html/i);
+          const channelSlug = titleMatch ? titleMatch[1].toUpperCase() : 'Kênh XemTV';
+          return res.json({ success: true, streams: [{ url: singleRes.streamUrl, sourceType: singleRes.sourceType || 'XemTV Player', channelName: channelSlug, pageTitle: `XemTV - ${channelSlug}` }], count: 1, source: normalizedUrl, pageTitle: `XemTV - ${channelSlug}`, channelName: channelSlug, message: `Đã lấy thành công luồng ${channelSlug} trên XemTV!` });
         }
-
+      } catch (e: any) { console.error('Lỗi XemTV single:', e.message); }
+    }
+    if (normalizedUrl.includes('vtvgo.vn')) {
+      const cleanRootUrl = normalizedUrl.replace(/\/+$/, '').toLowerCase();
+      if (cleanRootUrl === 'https://vtvgo.vn' || cleanRootUrl === 'http://vtvgo.vn') {
+        try {
+          const updateRes = await runVtvgoUpdate();
+          const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
+          let extracted: any[] = [];
+          if (fs.existsSync(targetPath)) {
+            const lines = fs.readFileSync(targetPath, 'utf8').split(/\r?\n/); let curName = '';
+            for (const l of lines) {
+              const t = l.trim();
+              if (t.startsWith('#EXTINF:')) { const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/); curName = m ? m[1].trim() : 'Kênh VTVGo'; } 
+              else if (t.startsWith('http')) extracted.push({ url: t, sourceType: curName, channelName: curName, pageTitle: `VTVGo - ${curName}` });
+            }
+          }
+          return res.json({ success: true, streams: extracted, count: extracted.length, totalChannelsFound: updateRes.channelsCount, source: normalizedUrl, pageTitle: `VTVGo Portal (${updateRes.channelsCount} kênh)`, message: `Đã quét https://vtvgo.vn/: Tìm thấy ${updateRes.channelsCount} kênh!` });
+        } catch (e: any) { console.error('Lỗi portal vtvgo.vn:', e.message); }
+      }
+      try {
+        let channelId = '1';
+        const channelMatch = normalizedUrl.match(/\/channel\/([a-zA-Z0-9]+)/i);
+        if (channelMatch) channelId = channelMatch[1];
         const deviceId = crypto.randomUUID();
-        const vtvApiUrl = 'https://api.vtvdigital.org/live-channel/v21.0/playback/source';
-        const vtvRes = await fetch(vtvApiUrl, {
+        const vtvRes = await fetch('https://api.vtvdigital.org/live-channel/v21.0/playback/source', {
           method: 'POST',
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Referer': 'https://vtvgo.vn/',
-            'Origin': 'https://vtvgo.vn',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            channelId: String(channelId),
-            platform: 'webPC',
-            deviceId: deviceId
-          }),
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0', 'Referer': 'https://vtvgo.vn/', 'Origin': 'https://vtvgo.vn', 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ channelId: String(channelId), platform: 'webPC', deviceId }),
           signal: AbortSignal.timeout(10000)
         });
-
         if (vtvRes.ok) {
           const vtvData: any = await vtvRes.json();
           const channelName = vtvData.data?.channelName || `VTV (Kênh ${channelId})`;
-          const vtvStreams: { url: string; sourceType: string }[] = [];
-
-          const sourceModes = vtvData.data?.sourceModes || [];
-          for (const mode of sourceModes) {
-            const multiSource = mode.multiSource || [];
-            for (const ms of multiSource) {
-              const sources = ms.sources || [];
-              for (const s of sources) {
+          const vtvStreams: any[] = [];
+          for (const mode of (vtvData.data?.sourceModes || [])) {
+            for (const ms of (mode.multiSource || [])) {
+              for (const s of (ms.sources || [])) {
                 if (s.url && s.url.includes('.m3u8')) {
                   let cdnLabel = 'Akamai CDN';
                   if (s.url.includes('live-vtv-aws') || s.url.includes('aws')) cdnLabel = 'AWS CloudFront CDN';
                   else if (s.url.includes('vnetwork')) cdnLabel = 'VNetwork CDN';
                   else if (s.url.includes('vtvgolive')) cdnLabel = 'VTV Digital CDN';
-
-                  vtvStreams.push({
-                    url: s.url,
-                    sourceType: `${channelName} (${cdnLabel})`
-                  });
+                  vtvStreams.push({ url: s.url, sourceType: `${channelName} (${cdnLabel})` });
                 }
               }
             }
           }
-
-          if (vtvStreams.length > 0) {
-            return res.json({
-              success: true,
-              streams: vtvStreams,
-              count: vtvStreams.length,
-              source: normalizedUrl,
-              pageTitle: `VTVGo Trực Tiếp - ${channelName}`,
-              channelNumber: parseInt(channelId, 10) || 1,
-              channelName: channelName,
-              message: `Đã kết nối và lấy thành công luồng phát trực tiếp của ${channelName}!`
-            });
-          }
+          if (vtvStreams.length > 0) return res.json({ success: true, streams: vtvStreams, count: vtvStreams.length, source: normalizedUrl, pageTitle: `VTVGo Trực Tiếp - ${channelName}`, channelNumber: parseInt(channelId, 10) || 1, channelName, message: `Đã lấy thành công luồng ${channelName}!` });
         }
-      } catch (vtvErr: any) {
-        console.error('VTVGo custom handler error:', vtvErr.message);
-      }
+      } catch (e: any) { console.error('VTVGo handler error:', e.message); }
     }
-
-    // Special Platform: TV360 (https://tv360.vn/tv/..., tv360.vn/...)
-    if (normalizedUrl.includes('tv360.vn')) {
-      try {
-        let channelId = '2';
-        let channelName = '';
-        let channelSlug = '';
-        let seoTitle = '';
-        let displayNumber = 1;
-
-        // Parse query params if available (e.g. ?ch=2)
-        try {
-          const parsedTvUrl = new URL(normalizedUrl);
-          const qCh = parsedTvUrl.searchParams.get('ch') || parsedTvUrl.searchParams.get('id');
-          if (qCh) channelId = qCh;
-          const segments = parsedTvUrl.pathname.split('/').filter(Boolean);
-          if (segments.length > 0) {
-            channelSlug = segments[segments.length - 1].toLowerCase();
-          }
-        } catch {}
-
-        // Fetch TV360 page to extract SSR metadata in __NEXT_DATA__
-        try {
-          const tvPageRes = await fetch(normalizedUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-              'Referer': 'https://tv360.vn/'
-            },
-            signal: AbortSignal.timeout(10000)
-          });
-
-          if (tvPageRes.ok) {
-            const html = await tvPageRes.text();
-            const nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-            if (nextMatch) {
-              const nextData = JSON.parse(nextMatch[1]);
-              const detail = nextData.props?.pageProps?.liveDetail?.detail;
-              if (detail) {
-                channelName = detail.name || '';
-                if (detail.slug) channelSlug = detail.slug.toLowerCase();
-                if (detail.id) channelId = String(detail.id);
-                seoTitle = detail.seoTitle || detail.description || '';
-                if (detail.shortcutKeyboard) {
-                  const sk = parseInt(detail.shortcutKeyboard, 10);
-                  if (!isNaN(sk)) displayNumber = sk;
-                } else if (detail.id) {
-                  const idNum = parseInt(detail.id, 10);
-                  if (!isNaN(idNum)) displayNumber = idNum;
-                }
-              }
-            }
-          }
-        } catch (fetchErr: any) {
-          console.error('TV360 page fetch error:', fetchErr.message);
-        }
-
-        if (!channelName && channelSlug) {
-          channelName = channelSlug.toUpperCase();
-        }
-
-        const tv360Streams: {
-          url: string;
-          sourceType: string;
-          channelNumber?: number;
-          channelName?: string;
-          pageTitle?: string;
-        }[] = [];
-
-        // 1. Attempt TV360 Direct Stream API (Viettel CDN)
-        try {
-          const tSec = Math.floor(Date.now() / 1000);
-          const tv360ApiUrl = `https://tv360.vn/public/v1/composite/get-link?id=${channelId}&type=LIVE&t=${tSec}&secured=true`;
-          const apiRes = await fetch(tv360ApiUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-              'Referer': normalizedUrl,
-              'Origin': 'https://tv360.vn',
-              'Accept': 'application/json, text/plain, */*'
-            },
-            signal: AbortSignal.timeout(5000)
-          });
-          if (apiRes.ok) {
-            const apiData: any = await apiRes.json();
-            if (apiData?.data) {
-              const directUrl = apiData.data.urlStreaming || apiData.data.url || apiData.data.streamUrl;
-              if (directUrl && typeof directUrl === 'string' && directUrl.includes('.m3u8')) {
-                tv360Streams.push({
-                  url: directUrl,
-                  sourceType: `${channelName || 'TV360'} (TV360 Viettel CDN)`,
-                  channelNumber: displayNumber,
-                  channelName: channelName || 'TV360 Live',
-                  pageTitle: `TV360 - ${channelName || 'Trực Tiếp'}`
-                });
-              }
-            }
-          }
-        } catch (apiErr: any) {
-          console.error('TV360 direct API error:', apiErr.message);
-        }
-
-        // 2. High-availability resolver for VTV / National Channels
-        const slugLower = (channelSlug || '').toLowerCase();
-        const nameLower = (channelName || '').toLowerCase();
-        let mappedVtvChannelId: string | null = null;
-
-        if (slugLower === 'vtv1' || nameLower.includes('vtv1')) mappedVtvChannelId = '1';
-        else if (slugLower === 'vtv2' || nameLower.includes('vtv2')) mappedVtvChannelId = '2';
-        else if (slugLower === 'vtv3' || nameLower.includes('vtv3')) mappedVtvChannelId = '3';
-        else if (slugLower === 'vtv4' || nameLower.includes('vtv4')) mappedVtvChannelId = '4';
-        else if (slugLower === 'vtv5' || nameLower.includes('vtv5')) mappedVtvChannelId = '5';
-        else if (slugLower === 'vtv6' || slugLower.includes('can-tho') || nameLower.includes('vtv6') || nameLower.includes('cần thơ')) mappedVtvChannelId = '13';
-        else if (slugLower === 'vtv7' || nameLower.includes('vtv7')) mappedVtvChannelId = '7';
-        else if (slugLower === 'vtv8' || nameLower.includes('vtv8')) mappedVtvChannelId = '8';
-        else if (slugLower === 'vtv9' || nameLower.includes('vtv9')) mappedVtvChannelId = '9';
-        else if (slugLower.includes('tay-nam-bo') || nameLower.includes('tây nam bộ')) mappedVtvChannelId = '7';
-        else if (slugLower.includes('tay-nguyen') || nameLower.includes('tây nguyên')) mappedVtvChannelId = '11';
-        else if (slugLower === 'vtv10' || nameLower.includes('vtv10')) mappedVtvChannelId = '6';
-        else if (slugLower.includes('ha-noi-2') || nameLower.includes('hà nội 2')) mappedVtvChannelId = '17';
-
-        if (mappedVtvChannelId) {
-          try {
-            const vtvRes = await fetch('https://api.vtvdigital.org/live-channel/v21.0/playback/source', {
-              method: 'POST',
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Referer': 'https://vtvgo.vn/',
-                'Origin': 'https://vtvgo.vn',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                channelId: mappedVtvChannelId,
-                platform: 'webPC',
-                deviceId: crypto.randomUUID()
-              }),
-              signal: AbortSignal.timeout(10000)
-            });
-
-            if (vtvRes.ok) {
-              const vtvData: any = await vtvRes.json();
-              const vtvName = vtvData.data?.channelName || channelName || `VTV (${channelSlug.toUpperCase()})`;
-              const sourceModes = vtvData.data?.sourceModes || [];
-              for (const mode of sourceModes) {
-                const multiSource = mode.multiSource || [];
-                for (const ms of multiSource) {
-                  const sources = ms.sources || [];
-                  for (const s of sources) {
-                    if (s.url && s.url.includes('.m3u8')) {
-                      let cdnLabel = 'Akamai CDN';
-                      if (s.url.includes('live-vtv-aws') || s.url.includes('aws') || s.url.includes('cloudfront')) cdnLabel = 'AWS CloudFront CDN';
-                      else if (s.url.includes('vnetwork')) cdnLabel = 'VNetwork CDN';
-                      else if (s.url.includes('vtvgolive') || s.url.includes('vtvdigital')) cdnLabel = 'VTV Digital CDN';
-
-                      tv360Streams.push({
-                        url: s.url,
-                        sourceType: `${vtvName} (${cdnLabel})`,
-                        channelNumber: displayNumber,
-                        channelName: vtvName,
-                        pageTitle: `TV360 - ${vtvName}`
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          } catch (vtvErr: any) {
-            console.error('TV360 VTV resolver error:', vtvErr.message);
-          }
-        }
-
-        // Deduplicate streams by url
-        const uniqueTv360Streams = Array.from(new Map(tv360Streams.map(s => [s.url, s])).values());
-
-        if (uniqueTv360Streams.length > 0) {
-          return res.json({
-            success: true,
-            streams: uniqueTv360Streams,
-            count: uniqueTv360Streams.length,
-            source: normalizedUrl,
-            pageTitle: `TV360 - ${channelName || 'Trực Tiếp'}`,
-            channelNumber: displayNumber,
-            channelName: channelName || 'TV360 Live',
-            message: `Đã kết nối và lấy thành công ${uniqueTv360Streams.length} luồng phát trực tiếp của ${channelName} trên TV360!`
-          });
-        }
-      } catch (tv360OverallErr: any) {
-        console.error('TV360 custom handler overall error:', tv360OverallErr.message);
-      }
-    }
-
-    // Special Platform: FPT Play (https://fptplay.vn/xem-truyen-hinh/..., fptplay.vn/...)
-    if (normalizedUrl.includes('fptplay.vn')) {
-      try {
-        let channelSlug = '';
-        let channelName = '';
-        let seoTitle = '';
-        let displayNumber = 1;
-
-        try {
-          const parsedFptUrl = new URL(normalizedUrl);
-          const segments = parsedFptUrl.pathname.split('/').filter(Boolean);
-          if (segments.length > 0) {
-            channelSlug = segments[segments.length - 1].toLowerCase();
-          }
-        } catch {}
-
-        // Fetch FPT Play page to extract Next.js SSR metadata in __NEXT_DATA__
-        try {
-          const fptPageRes = await fetch(normalizedUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-              'Referer': 'https://fptplay.vn/'
-            },
-            signal: AbortSignal.timeout(10000)
-          });
-
-          if (fptPageRes.ok) {
-            const html = await fptPageRes.text();
-            const nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-            if (nextMatch) {
-              const nextData = JSON.parse(nextMatch[1]);
-              const seoProps = nextData.props?.pageProps?.seoProps;
-              if (seoProps) {
-                seoTitle = seoProps.title || '';
-                if (seoTitle) {
-                  channelName = seoTitle
-                    .replace(/\s*[-|–].*$/i, '')
-                    .replace(/\s*(?:Online|Trực Tiếp).*$/i, '')
-                    .trim();
-                }
-              }
-              const queryId = nextData.query?.id;
-              if (queryId && typeof queryId === 'string') {
-                channelSlug = queryId.toLowerCase();
-              }
-            }
-          }
-        } catch (fetchErr: any) {
-          console.error('FPT Play page fetch error:', fetchErr.message);
-        }
-
-        const slugClean = channelSlug.replace(/-hd$/i, '').toLowerCase();
-
-        // Detect displayNumber
-        const vtvMatch = slugClean.match(/vtv(\d+)/i) || channelSlug.match(/vtv(\d+)/i);
-        if (vtvMatch) {
-          displayNumber = parseInt(vtvMatch[1], 10);
-          if (!channelName) channelName = `VTV${displayNumber}`;
-        } else {
-          const numMatch = channelName.match(/\d+/);
-          if (numMatch) displayNumber = parseInt(numMatch[0], 10);
-        }
-
-        if (!channelName) {
-          channelName = slugClean.toUpperCase();
-        }
-
-        const fptStreams: {
-          url: string;
-          sourceType: string;
-          channelNumber?: number;
-          channelName?: string;
-          pageTitle?: string;
-        }[] = [];
-
-        // High-availability resolver for VTV / National Channels
-        const nameLower = channelName.toLowerCase();
-        let mappedVtvChannelId: string | null = null;
-
-        if (slugClean === 'vtv1' || nameLower.includes('vtv1')) mappedVtvChannelId = '1';
-        else if (slugClean === 'vtv2' || nameLower.includes('vtv2')) mappedVtvChannelId = '2';
-        else if (slugClean === 'vtv3' || nameLower.includes('vtv3')) mappedVtvChannelId = '3';
-        else if (slugClean === 'vtv4' || nameLower.includes('vtv4')) mappedVtvChannelId = '4';
-        else if (slugClean === 'vtv5' || nameLower.includes('vtv5')) mappedVtvChannelId = '5';
-        else if (slugClean === 'vtv6' || slugClean.includes('can-tho') || nameLower.includes('vtv6') || nameLower.includes('cần thơ')) mappedVtvChannelId = '13';
-        else if (slugClean === 'vtv7' || nameLower.includes('vtv7')) mappedVtvChannelId = '7';
-        else if (slugClean === 'vtv8' || nameLower.includes('vtv8')) mappedVtvChannelId = '8';
-        else if (slugClean === 'vtv9' || nameLower.includes('vtv9')) mappedVtvChannelId = '9';
-        else if (slugClean.includes('tay-nam-bo') || nameLower.includes('tây nam bộ')) mappedVtvChannelId = '7';
-        else if (slugClean.includes('tay-nguyen') || nameLower.includes('tây nguyên')) mappedVtvChannelId = '11';
-        else if (slugClean === 'vtv10' || nameLower.includes('vtv10')) mappedVtvChannelId = '6';
-        else if (slugClean.includes('ha-noi-2') || nameLower.includes('hà nội 2')) mappedVtvChannelId = '17';
-
-        if (mappedVtvChannelId) {
-          try {
-            const vtvRes = await fetch('https://api.vtvdigital.org/live-channel/v21.0/playback/source', {
-              method: 'POST',
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                'Referer': 'https://vtvgo.vn/',
-                'Origin': 'https://vtvgo.vn',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                channelId: mappedVtvChannelId,
-                platform: 'webPC',
-                deviceId: crypto.randomUUID()
-              }),
-              signal: AbortSignal.timeout(10000)
-            });
-
-            if (vtvRes.ok) {
-              const vtvData: any = await vtvRes.json();
-              const vtvName = vtvData.data?.channelName || channelName || `VTV${displayNumber}`;
-              const sourceModes = vtvData.data?.sourceModes || [];
-              for (const mode of sourceModes) {
-                const multiSource = mode.multiSource || [];
-                for (const ms of multiSource) {
-                  const sources = ms.sources || [];
-                  for (const s of sources) {
-                    if (s.url && s.url.includes('.m3u8')) {
-                      let cdnLabel = 'Akamai CDN';
-                      if (s.url.includes('live-vtv-aws') || s.url.includes('aws') || s.url.includes('cloudfront')) cdnLabel = 'AWS CloudFront CDN';
-                      else if (s.url.includes('vnetwork')) cdnLabel = 'VNetwork CDN';
-                      else if (s.url.includes('vtvgolive') || s.url.includes('vtvdigital')) cdnLabel = 'VTV Digital CDN';
-
-                      fptStreams.push({
-                        url: s.url,
-                        sourceType: `${vtvName} (${cdnLabel})`,
-                        channelNumber: displayNumber,
-                        channelName: vtvName,
-                        pageTitle: `FPT Play - ${vtvName}`
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          } catch (vtvErr: any) {
-            console.error('FPT Play VTV resolver error:', vtvErr.message);
-          }
-        }
-
-        // Deduplicate streams by url
-        const uniqueFptStreams = Array.from(new Map(fptStreams.map(s => [s.url, s])).values());
-
-        if (uniqueFptStreams.length > 0) {
-          return res.json({
-            success: true,
-            streams: uniqueFptStreams,
-            count: uniqueFptStreams.length,
-            source: normalizedUrl,
-            pageTitle: `FPT Play - ${channelName || 'Trực Tiếp'}`,
-            channelNumber: displayNumber,
-            channelName: channelName || `Kênh ${displayNumber}`,
-            message: `Đã kết nối và lấy thành công ${uniqueFptStreams.length} luồng phát trực tiếp của ${channelName} trên FPT Play!`
-          });
-        }
-      } catch (fptOverallErr: any) {
-        console.error('FPT Play custom handler overall error:', fptOverallErr.message);
-      }
-    }
-
     try {
-      const headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Referer': normalizedUrl,
-        'Cache-Control': 'no-cache',
-        'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1',
-      };
-
-      const response = await fetch(normalizedUrl, {
-        headers,
-        redirect: 'follow',
-        signal: AbortSignal.timeout(12000),
-      });
-
+      const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0', 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'vi-VN,vi;q=0.9', 'Referer': normalizedUrl };
+      const response = await fetch(normalizedUrl, { headers, redirect: 'follow', signal: AbortSignal.timeout(12000) });
       const responseText = await response.text();
       const finalUrl = response.url || normalizedUrl;
-
-      // Extract title
       const titleMatch = responseText.match(/<title[^>]*>([^<]+)<\/title>/i);
       const pageTitle = titleMatch ? titleMatch[1].trim() : '';
-
-      // 1. Extract from main HTML
       let foundStreams = extractM3u8FromText(responseText, finalUrl);
-
-      // 2. Scan for embedded video player iframes
       const iframeRegex = /<iframe[^>]+src=["']([^"']+)["']/gi;
       const iframeUrls: string[] = [];
       let iMatch;
       while ((iMatch = iframeRegex.exec(responseText)) !== null) {
         try {
           const resolvedIframe = new URL(iMatch[1], finalUrl).toString();
-          if (!resolvedIframe.startsWith('chrome-extension') && !resolvedIframe.includes('about:blank')) {
-            iframeUrls.push(resolvedIframe);
-          }
-        } catch {
-          // Ignore
-        }
+          if (!resolvedIframe.startsWith('chrome-extension') && !resolvedIframe.includes('about:blank')) iframeUrls.push(resolvedIframe);
+        } catch { /* ignore */ }
       }
-
-      // If needed, fetch top embedded iframes
       if (foundStreams.length === 0 && iframeUrls.length > 0) {
-        const topIframes = iframeUrls.slice(0, 4);
-        for (const ifrUrl of topIframes) {
+        for (const ifrUrl of iframeUrls.slice(0, 4)) {
           try {
-            const ifrRes = await fetch(ifrUrl, {
-              headers: { ...headers, Referer: finalUrl },
-              signal: AbortSignal.timeout(6000)
-            });
-            if (ifrRes.ok) {
-              const ifrText = await ifrRes.text();
-              const subFound = extractM3u8FromText(ifrText, ifrUrl);
-              for (const s of subFound) {
-                foundStreams.push({ ...s, sourceType: 'iframe-player' });
-              }
-            }
-          } catch {
-            // Ignore
-          }
+            const ifrRes = await fetch(ifrUrl, { headers: { ...headers, Referer: finalUrl }, signal: AbortSignal.timeout(6000) });
+            if (ifrRes.ok) { const ifrText = await ifrRes.text(); for (const s of extractM3u8FromText(ifrText, ifrUrl)) foundStreams.push({ ...s, sourceType: 'iframe-player' }); }
+          } catch { /* ignore */ }
         }
       }
-
-      // 3. Scan for linked internal scripts (e.g. player config scripts) if still not found
-      if (foundStreams.length === 0) {
-        const scriptSrcRegex = /<script[^>]+src=["']([^"']+\.js(?:\?[^"']*)?)["']/gi;
-        const scriptUrls: string[] = [];
-        let sMatch;
-        const parsedBase = new URL(finalUrl);
-        while ((sMatch = scriptSrcRegex.exec(responseText)) !== null) {
-          try {
-            const resolved = new URL(sMatch[1], finalUrl);
-            // Only fetch scripts from same origin or player CDNs
-            if (resolved.origin === parsedBase.origin || resolved.pathname.includes('player')) {
-              scriptUrls.push(resolved.toString());
-            }
-          } catch {
-            // Ignore
-          }
-        }
-
-        // Fetch top relevant scripts
-        const topScripts = scriptUrls.slice(0, 3);
-        for (const sUrl of topScripts) {
-          try {
-            const sRes = await fetch(sUrl, {
-              headers: { ...headers, Referer: finalUrl },
-              signal: AbortSignal.timeout(5000)
-            });
-            if (sRes.ok) {
-              const sText = await sRes.text();
-              const scriptFound = extractM3u8FromText(sText, sUrl);
-              for (const sf of scriptFound) {
-                foundStreams.push({ ...sf, sourceType: 'external-script' });
-              }
-            }
-          } catch {
-            // Ignore
-          }
-        }
-      }
-
-      // Deduplicate
       const uniqueStreams = Array.from(new Map(foundStreams.map(s => [s.url, s])).values());
-
-      return res.json({
-        success: true,
-        streams: uniqueStreams,
-        count: uniqueStreams.length,
-        source: finalUrl,
-        pageTitle,
-        iframesFound: iframeUrls.length,
-        httpStatus: response.status,
-      });
-
+      return res.json({ success: true, streams: uniqueStreams, count: uniqueStreams.length, source: finalUrl, pageTitle, iframesFound: iframeUrls.length, httpStatus: response.status });
     } catch (err: any) {
-      return res.status(500).json({
-        success: false,
-        error: `Không thể kết nối đến máy chủ: ${err.message || 'Lỗi không xác định'}`,
-        suggestion: 'Trang web có thể dùng Cloudflare chặn bot hoặc yêu cầu xác thực.'
-      });
+      return res.status(500).json({ success: false, error: `Không thể kết nối: ${err.message}`, suggestion: 'Trang web có thể dùng Cloudflare chặn bot.' });
     }
   });
 
-  // API: Proxy M3U8 Manifest & Video Segments
   app.get('/api/proxy-m3u8', async (req, res) => {
     const targetUrl = req.query.url as string;
     let referer = (req.query.referer as string) || targetUrl;
-    if (targetUrl && (targetUrl.includes('akamaized.net') || targetUrl.includes('vtv') || targetUrl.includes('vtvdigital'))) {
-      referer = 'https://vtvgo.vn/';
-    } else if (targetUrl && (targetUrl.includes('tv360') || targetUrl.includes('viettel'))) {
-      referer = 'https://tv360.vn/';
-    } else if (targetUrl && (targetUrl.includes('fptplay') || targetUrl.includes('fpt'))) {
-      referer = 'https://fptplay.vn/';
-    }
-
-    if (!targetUrl) {
-      return res.status(400).send('Missing url parameter');
-    }
-
+    if (targetUrl && (targetUrl.includes('akamaized.net') || targetUrl.includes('vtv') || targetUrl.includes('vtvdigital'))) referer = 'https://vtvgo.vn/';
+    else if (targetUrl && (targetUrl.includes('tv360') || targetUrl.includes('viettel'))) referer = 'https://tv360.vn/';
+    else if (targetUrl && (targetUrl.includes('fptplay') || targetUrl.includes('fpt'))) referer = 'https://fptplay.vn/';
+    if (!targetUrl) return res.status(400).send('Missing url parameter');
     try {
       const parsedUrl = new URL(targetUrl);
-      const upstreamRes = await fetch(parsedUrl.toString(), {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Referer': referer,
-          'Origin': parsedUrl.origin,
-          'Accept': '*/*',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-
+      const upstreamRes = await fetch(parsedUrl.toString(), { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': referer, 'Origin': parsedUrl.origin, 'Accept': '*/*' }, signal: AbortSignal.timeout(15000) });
       const contentType = upstreamRes.headers.get('content-type') || 'application/vnd.apple.mpegurl';
-      
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', '*');
       res.setHeader('Content-Type', contentType);
-
       if (contentType.includes('mpegurl') || targetUrl.includes('.m3u8')) {
         const manifestText = await upstreamRes.text();
         const baseHref = parsedUrl.origin + parsedUrl.pathname.substring(0, parsedUrl.pathname.lastIndexOf('/') + 1);
-
-        const lines = manifestText.split('\n');
-        const rewritten = lines.map((line) => {
+        const rewritten = manifestText.split('\n').map((line) => {
           const trimmed = line.trim();
           if (!trimmed || trimmed.startsWith('#')) {
-            if (trimmed.includes('URI="')) {
-              return trimmed.replace(/URI="([^"]+)"/, (_, uri) => {
-                const fullKeyUrl = uri.startsWith('http') ? uri : new URL(uri, baseHref).toString();
-                return `URI="/api/proxy-m3u8?url=${encodeURIComponent(fullKeyUrl)}&referer=${encodeURIComponent(referer)}"`;
-              });
-            }
+            if (trimmed.includes('URI="')) return trimmed.replace(/URI="([^"]+)"/, (_, uri) => `URI="/api/proxy-m3u8?url=${encodeURIComponent(uri.startsWith('http') ? uri : new URL(uri, baseHref).toString())}&referer=${encodeURIComponent(referer)}"`);
             return line;
           }
-          const fullSegmentUrl = trimmed.startsWith('http') ? trimmed : new URL(trimmed, baseHref).toString();
-          return `/api/proxy-m3u8?url=${encodeURIComponent(fullSegmentUrl)}&referer=${encodeURIComponent(referer)}`;
+          return `/api/proxy-m3u8?url=${encodeURIComponent(trimmed.startsWith('http') ? trimmed : new URL(trimmed, baseHref).toString())}&referer=${encodeURIComponent(referer)}`;
         }).join('\n');
-
         return res.send(rewritten);
       } else {
-        const arrayBuffer = await upstreamRes.arrayBuffer();
-        return res.send(Buffer.from(arrayBuffer));
+        return res.send(Buffer.from(await upstreamRes.arrayBuffer()));
       }
-
-    } catch (err: any) {
-      return res.status(500).send(`Proxy Error: ${err.message}`);
-    }
+    } catch (err: any) { return res.status(500).send(`Proxy Error: ${err.message}`); }
   });
 
-  // API: Save M3U Playlist to project root (e.g. tvPremium.m3u)
   app.post('/api/save-playlist', (req, res) => {
     try {
-      const { filename = 'tvPremium.m3u', content, lines } = req.body;
-      let finalContent = '';
-      if (typeof content === 'string') {
-        finalContent = content;
-      } else if (Array.isArray(lines)) {
-        finalContent = lines.join('\r\n');
-      } else {
-        return res.status(400).json({ success: false, error: 'Dữ liệu danh sách phát không hợp lệ' });
-      }
-
-      // Ensure UTF-8 BOM
-      if (!finalContent.startsWith('\uFEFF')) {
-        finalContent = '\uFEFF' + finalContent;
-      }
-
-      const safeFilename = 'tvPremium.m3u';
-      const targetPath = path.resolve(__dirname, safeFilename);
+      const { content, lines } = req.body;
+      let finalContent = typeof content === 'string' ? content : (Array.isArray(lines) ? lines.join('\r\n') : null);
+      if (!finalContent) return res.status(400).json({ success: false, error: 'Dữ liệu không hợp lệ' });
+      if (!finalContent.startsWith('\uFEFF')) finalContent = '\uFEFF' + finalContent;
+      const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
       fs.writeFileSync(targetPath, finalContent, 'utf8');
-
-      const stats = fs.statSync(targetPath);
-      const channelCount = (finalContent.match(/#EXTINF/gi) || []).length;
-
-      return res.json({
-        success: true,
-        filename: safeFilename,
-        size: stats.size,
-        updatedAt: stats.mtime,
-        channelCount,
-        message: `Đã lưu thành công ${channelCount} kênh vào file ${safeFilename} trong thư mục dự án!`
-      });
-    } catch (err: any) {
-      return res.status(500).json({ success: false, error: err.message || 'Lỗi khi lưu file' });
-    }
+      return res.json({ success: true, filename: 'tvPremium.m3u', channelCount: (finalContent.match(/#EXTINF/gi) || []).length, message: `Đã lưu!` });
+    } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
   });
 
-  // API: Get tvPremium.m3u status
+  app.get('/api/discover-vtvgo-channels', async (req, res) => {
+    try { const channels = await discoverVtvgoChannels(); return res.json({ success: true, count: channels.length, channels }); } 
+    catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
+  });
+
+  app.post('/api/scan-vtvgo-portal', async (req, res) => {
+    try {
+      const updateRes = await runVtvgoUpdate();
+      const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
+      let extracted: any[] = [];
+      if (fs.existsSync(targetPath)) {
+        const lines = fs.readFileSync(targetPath, 'utf8').split(/\r?\n/); let curName = '';
+        for (const l of lines) {
+          const t = l.trim();
+          if (t.startsWith('#EXTINF:')) { const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/); curName = m ? m[1].trim() : 'Kênh VTVGo'; } 
+          else if (t.startsWith('http')) extracted.push({ url: t, sourceType: curName, channelName: curName, pageTitle: `VTVGo - ${curName}` });
+        }
+      }
+      return res.json({ success: true, channelsCount: updateRes.channelsCount, totalStreams: updateRes.totalStreams, streams: extracted });
+    } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
+  });
+
+  app.get('/api/discover-xemtv-channels', async (req, res) => {
+    try { const channels = await discoverXemtvChannelsHelper(); return res.json({ success: true, count: channels.length, channels }); } 
+    catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
+  });
+
+  app.post('/api/scan-xemtv-portal', async (req, res) => {
+    try {
+      const updateRes = await runXemtvUpdate({ limit: Number(req.body.limit) || 120 });
+      const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
+      let extracted: any[] = [];
+      if (fs.existsSync(targetPath)) {
+        const lines = fs.readFileSync(targetPath, 'utf8').split(/\r?\n/); let curName = '', curLogo = '';
+        for (const l of lines) {
+          const t = l.trim();
+          if (t.startsWith('#EXTINF:')) {
+            const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/); curName = m ? m[1].trim() : 'Kênh XemTV';
+            const logoMatch = t.match(/tvg-logo="([^"]+)"/); curLogo = logoMatch ? logoMatch[1] : '';
+          } else if (t.startsWith('http')) extracted.push({ url: t, sourceType: curName, channelName: curName, pageTitle: `XemTV - ${curName}`, logo: curLogo });
+        }
+      }
+      return res.json({ success: true, channelsDiscovered: updateRes.channelsDiscovered, channelsCount: updateRes.validStreamsCount, streams: extracted });
+    } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
+  });
+
   app.get('/api/playlist-status', (req, res) => {
     try {
       const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
       if (fs.existsSync(targetPath)) {
-        const stats = fs.statSync(targetPath);
-        const content = fs.readFileSync(targetPath, 'utf8');
-        const channelCount = (content.match(/#EXTINF/gi) || []).length;
-        return res.json({
-          exists: true,
-          filename: 'tvPremium.m3u',
-          size: stats.size,
-          updatedAt: stats.mtime,
-          channelCount,
-        });
+        const stats = fs.statSync(targetPath); const content = fs.readFileSync(targetPath, 'utf8');
+        return res.json({ exists: true, filename: 'tvPremium.m3u', size: stats.size, updatedAt: stats.mtime, channelCount: (content.match(/#EXTINF/gi) || []).length });
       }
       return res.json({ exists: false, filename: 'tvPremium.m3u' });
-    } catch (err: any) {
-      return res.status(500).json({ exists: false, error: err.message });
-    }
+    } catch (err: any) { return res.status(500).json({ exists: false, error: err.message }); }
   });
 
-  // API: Auto-Save local tvPremium.m3u & Sync to GitHub (create or replace)
   app.post('/api/github-sync', async (req, res) => {
     try {
-      const {
-        token,
-        repo = 'thanhthovn/tvPremium',
-        branch = 'main',
-        filePath = 'tvPremium.m3u',
-        content,
-        lines,
-        commitMessage,
-      } = req.body;
-
-      // 1. Prepare UTF-8 BOM M3U content
-      let finalContent = '';
-      if (typeof content === 'string') {
-        finalContent = content;
-      } else if (Array.isArray(lines)) {
-        finalContent = lines.join('\r\n');
-      } else {
-        return res.status(400).json({ success: false, error: 'Dữ liệu danh sách phát không hợp lệ' });
-      }
-
-      if (!finalContent.startsWith('\uFEFF')) {
-        finalContent = '\uFEFF' + finalContent;
-      }
-
-      // 2. Always auto-save to local workspace first
+      const { token, repo = 'thanhthovn/tvPremium', branch = 'main', filePath = 'tvPremium.m3u', content, rawContent, lines, commitMessage } = req.body;
+      let finalContent = typeof rawContent === 'string' ? rawContent : (typeof content === 'string' ? content : (Array.isArray(lines) ? lines.join('\r\n') : null));
+      if (!finalContent) return res.status(400).json({ success: false, error: 'Dữ liệu không hợp lệ' });
+      if (!finalContent.startsWith('\uFEFF')) finalContent = '\uFEFF' + finalContent;
       const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
       fs.writeFileSync(targetPath, finalContent, 'utf8');
-      const stats = fs.statSync(targetPath);
       const channelCount = (finalContent.match(/#EXTINF/gi) || []).length;
-
-      // 3. If no GitHub token provided, return local save success
-      if (!token || typeof token !== 'string' || !token.trim()) {
-        return res.json({
-          success: true,
-          localSaved: true,
-          githubSynced: false,
-          channelCount,
-          updatedAt: stats.mtime,
-          message: `Đã tự động lưu ${channelCount} kênh vào file tvPremium.m3u trong dự án!`,
-        });
-      }
-
-      // 4. Clean repo string (handles "user/repo" or "https://github.com/user/repo")
+      if (!token || !token.trim()) return res.json({ success: true, localSaved: true, githubSynced: false, channelCount, message: `Đã lưu local!` });
+      
       const repoFullName = repo.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '');
-      if (!repoFullName.includes('/')) {
-        return res.status(400).json({
-          success: false,
-          localSaved: true,
-          error: 'Tên repository không hợp lệ. Định dạng chuẩn: username/repo-name (ví dụ: thanhthovn/tvPremium)',
-        });
-      }
-
-      const cleanBranch = (branch || 'main').trim();
-      const targetFilePath = (filePath || 'tvPremium.m3u').trim();
-
-      // 5. Fetch existing file SHA on GitHub (if it exists) to allow replacement / update
       let existingSha: string | null = null;
-      const getFileUrl = `https://api.github.com/repos/${repoFullName}/contents/${targetFilePath}?ref=${encodeURIComponent(cleanBranch)}`;
-
-      const checkRes = await fetch(getFileUrl, {
-        headers: {
-          'Authorization': `Bearer ${token.trim()}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'AIStudio-M3U-AutoSync',
-        },
-      });
-
-      if (checkRes.ok) {
-        const fileInfo: any = await checkRes.json();
-        existingSha = fileInfo.sha || null;
-      } else if (checkRes.status !== 404) {
-        const errData: any = await checkRes.json().catch(() => ({}));
-        const errMsg = errData.message || checkRes.statusText;
-        return res.status(checkRes.status).json({
-          success: false,
-          localSaved: true,
-          error: `GitHub API error (${checkRes.status}): ${errMsg}. Vui lòng kiểm tra lại Token hoặc quyền truy cập Repository.`,
-        });
-      }
-
-      // 6. Push to GitHub using PUT /repos/:owner/:repo/contents/:path
-      const putFileUrl = `https://api.github.com/repos/${repoFullName}/contents/${targetFilePath}`;
-      const base64Content = Buffer.from(finalContent, 'utf8').toString('base64');
-      const finalMsg = commitMessage || `Auto-update ${targetFilePath} (${channelCount} channels)`;
-
-      const putBody: any = {
-        message: finalMsg,
-        content: base64Content,
-        branch: cleanBranch,
-      };
-      if (existingSha) {
-        putBody.sha = existingSha;
-      }
-
-      const putRes = await fetch(putFileUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token.trim()}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-          'User-Agent': 'AIStudio-M3U-AutoSync',
-        },
-        body: JSON.stringify(putBody),
-      });
-
-      if (!putRes.ok) {
-        const errData: any = await putRes.json().catch(() => ({}));
-        return res.status(putRes.status).json({
-          success: false,
-          localSaved: true,
-          githubSynced: false,
-          error: `Không thể đẩy lên GitHub (${putRes.status}): ${errData.message || putRes.statusText}`,
-        });
-      }
-
+      const checkRes = await fetch(`https://api.github.com/repos/${repoFullName}/contents/${filePath}?ref=${encodeURIComponent(branch)}`, { headers: { 'Authorization': `Bearer ${token.trim()}`, 'Accept': 'application/vnd.github.v3+json' } });
+      if (checkRes.ok) existingSha = (await checkRes.json()).sha || null;
+      
+      const putBody: any = { message: commitMessage || `Auto-update (${channelCount} channels)`, content: Buffer.from(finalContent, 'utf8').toString('base64'), branch: branch.trim() };
+      if (existingSha) putBody.sha = existingSha;
+      const putRes = await fetch(`https://api.github.com/repos/${repoFullName}/contents/${filePath}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token.trim()}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(putBody) });
+      
+      if (!putRes.ok) return res.status(putRes.status).json({ success: false, localSaved: true, error: `Lỗi GitHub: ${(await putRes.json()).message}` });
       const putData: any = await putRes.json();
-
-      return res.json({
-        success: true,
-        localSaved: true,
-        githubSynced: true,
-        channelCount,
-        repo: repoFullName,
-        branch: cleanBranch,
-        sha: putData.content?.sha,
-        commitUrl: putData.commit?.html_url,
-        downloadUrl: putData.content?.download_url,
-        message: `Đã tự động lưu & đồng bộ ${channelCount} kênh lên GitHub (${repoFullName}/${targetFilePath}) thành công!`,
-      });
-
-    } catch (err: any) {
-      return res.status(500).json({
-        success: false,
-        localSaved: true,
-        error: `Lỗi khi đồng bộ GitHub: ${err.message || 'Lỗi không xác định'}`,
-      });
-    }
+      return res.json({ success: true, localSaved: true, githubSynced: true, channelCount, repo: repoFullName, commitUrl: putData.commit?.html_url, message: `Đã đồng bộ!` });
+    } catch (err: any) { return res.status(500).json({ success: false, localSaved: true, error: err.message }); }
   });
 
-  // API & Static: Serve tvPremium.m3u directly (IPTV stream format)
+  app.get('/api/load-iptv-ori', async (req, res) => {
+    try {
+      const repo = (req.query.repo as string) || 'thanhthovn/tvPremium'; const branch = (req.query.branch as string) || 'main'; const filePath = (req.query.filePath as string) || 'iptv_ori.m3u'; const wantsRaw = String(req.query.raw || '') === '1';
+      const cleanRepo = repo.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '');
+      let content = '';
+      try { const rawRes = await fetch(`https://raw.githubusercontent.com/${cleanRepo}/${branch}/${filePath}`); if (rawRes.ok) content = await rawRes.text(); } catch { /* fallback */ }
+      if (!content) {
+        const token = (req.query.token as string) || process.env.GH_TOKEN;
+        const apiRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${filePath}?ref=${branch}`, { headers: { 'Accept': 'application/vnd.github.v3.raw', ...(token ? { 'Authorization': `token ${token}` } : {}) } });
+        if (apiRes.ok) content = await apiRes.text();
+      }
+      if (!content) return res.status(404).json({ success: false, error: 'Không tìm thấy file' });
+      if (wantsRaw) return res.json({ success: true, content, rawContent: content });
+      
+      const lines = content.split(/\r?\n/); const channels: any[] = []; let currentCh: any = null;
+      for (const l of lines) {
+        const line = l.trim();
+        if (line.startsWith('#EXTINF:')) {
+          const titleMatch = line.match(/,\s*(.+)$/); const name = titleMatch ? titleMatch[1].trim() : 'Unknown';
+          const groupMatch = line.match(/group-title="([^"]+)"/i); const logoMatch = line.match(/tvg-logo="([^"]+)"/i);
+          currentCh = { id: `ori-${channels.length + 1}`, name, group: groupMatch ? groupMatch[1] : 'Khác', logo: logoMatch ? logoMatch[1] : '', url: '' };
+        } else if (line && !line.startsWith('#')) { if (currentCh) { currentCh.url = line; channels.push(currentCh); currentCh = null; } }
+      }
+      const groups: Record<string, number> = {}; for (const ch of channels) groups[ch.group] = (groups[ch.group] || 0) + 1;
+      return res.json({ success: true, totalChannels: channels.length, groups, channels, rawContent: content });
+    } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
+  });
+
+  app.post('/api/smart-replace', async (req, res) => {
+    try {
+      const { token, repo = 'thanhthovn/tvPremium', branch = 'main', channelUrlFile = 'channel_url.txt', m3uFile = 'tvPremium.m3u' } = req.body || {};
+      if (!token || !token.trim()) return res.status(400).json({ success: false, error: 'Cần GitHub Token.' });
+      const cleanRepo = repo.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, ''); const cleanBranch = (branch || 'main').trim();
+
+      // 1. Đọc channel_url.txt
+      const chRes = await fetch(`https://raw.githubusercontent.com/${cleanRepo}/${cleanBranch}/${channelUrlFile}?t=${Date.now()}`);
+      if (!chRes.ok) return res.status(404).json({ success: false, error: `Không đọc được ${channelUrlFile}` });
+      const slugs: string[] = [];
+      for (const raw of (await chRes.text()).split(/\r?\n/)) {
+        const line = raw.trim();
+        if (line.startsWith('#')) { const slug = line.replace(/^#+/, '').trim().toLowerCase(); if (slug) slugs.push(slug); }
+      }
+      if (slugs.length === 0) return res.status(400).json({ success: false, error: 'File không có #slug' });
+
+      // 2. Đọc tvPremium.m3u
+      const m3uRes = await fetch(`https://raw.githubusercontent.com/${cleanRepo}/${cleanBranch}/${m3uFile}?t=${Date.now()}`);
+      if (!m3uRes.ok) return res.status(404).json({ success: false, error: `Không đọc được ${m3uFile}` });
+      const originalText = await m3uRes.text();
+      const useCRLF = /\r\n/.test(originalText); const hadBOM = originalText.charCodeAt(0) === 0xFEFF;
+      let lines = originalText.split(/\r?\n/); if (hadBOM && lines.length > 0) lines[0] = lines[0].replace(/^\uFEFF/, '');
+
+      // 3. Load cache portals
+      const [vtvgoChannels, xemtvChannels] = await Promise.allSettled([discoverVtvgoChannels(), discoverXemtvChannelsHelper()]);
+      const vtvgoList = vtvgoChannels.status === 'fulfilled' ? vtvgoChannels.value : [];
+      const xemtvList = xemtvChannels.status === 'fulfilled' ? xemtvChannels.value : [];
+      
+      const vtvgoMap = new Map<string, any>(); for (const ch of vtvgoList) vtvgoMap.set(normalizeKey(ch.channelName || ''), { id: ch.channelId, name: ch.channelName });
+      const xemtvMap = new Map<string, any>(); for (const ch of xemtvList) xemtvMap.set(normalizeKey(ch.channelName || ''), { url: ch.url, name: ch.channelName, logo: ch.logo || '' });
+
+      const results: any[] = []; let replaced = 0, kept = 0, failed = 0; const vtvgoFetchCache = new Map<string, any[]>();
+
+      for (const slug of slugs) {
+        const displayName = SLUG_TO_NAME[slug];
+        if (!displayName) { results.push({ slug, name: slug, status: 'error', note: 'Slug không có trong mapping' }); failed++; continue; }
+        
+        const searchKeys = new Set<string>(getSearchKeys(slug, displayName));
+
+        // Tìm trong M3U (Fuzzy)
+        let extinfIdx = -1;
+        for (let i = 0; i < lines.length; i++) {
+          const l = lines[i]; if (!l.startsWith('#EXTINF')) continue;
+          const rawId = (l.match(/tvg-id="([^"]+)"/i) || [])[1] || '';
+          const rawTvg = (l.match(/tvg-name="([^"]+)"/i) || [])[1] || '';
+          let rawName = (l.match(/,\s*(.+)$/) || [])[1] || '';
+          rawName = rawName.replace(/\([^)]*\)/g, '').replace(/\s+(HD|FHD|SD|4K)$/i, '').trim();
+          
+          const normId = normalizeKey(rawId), normTvg = normalizeKey(rawTvg), normName = normalizeKey(rawName);
+          for (const k of searchKeys) {
+            if (!k) continue;
+            if (normId === k || normTvg === k || normName === k || (k.length > 3 && (normName.includes(k) || k.includes(normName)))) { extinfIdx = i; break; }
+          }
+          if (extinfIdx !== -1) break;
+        }
+
+        if (extinfIdx === -1) { results.push({ slug, name: displayName, status: 'error', note: 'Không thấy kênh trong tvPremium.m3u' }); failed++; continue; }
+        
+        let urlLineIdx = extinfIdx + 1; while (urlLineIdx < lines.length && lines[urlLineIdx].trim().startsWith('#')) urlLineIdx++;
+        if (urlLineIdx >= lines.length || !lines[urlLineIdx].trim()) { results.push({ slug, name: displayName, status: 'error', note: 'Thiếu dòng URL' }); failed++; continue; }
+        const oldUrl = lines[urlLineIdx].trim();
+
+        // 4a. Lấy candidates từ VTVGo (Fuzzy Match)
+        const vtvgoCandidates: Array<{ url: string; source: 'VTVGo' }> = [];
+        let vtvgoEntry: any = undefined;
+        for (const k of searchKeys) { if (vtvgoMap.has(k)) { vtvgoEntry = vtvgoMap.get(k); break; } }
+        if (!vtvgoEntry) {
+          for (const [cacheKey, entry] of vtvgoMap.entries()) {
+            if (Array.from(searchKeys).some(k => k.length > 3 && (cacheKey.includes(k) || k.includes(cacheKey)))) { vtvgoEntry = entry; break; }
+          }
+        }
+        if (vtvgoEntry) {
+          try {
+            let streams = vtvgoFetchCache.get(vtvgoEntry.id);
+            if (!streams) {
+              const apiRes = await fetch('https://api.vtvdigital.org/live-channel/v21.0/playback/source', {
+                method: 'POST', headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://vtvgo.vn/', 'Origin': 'https://vtvgo.vn', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ channelId: String(vtvgoEntry.id), platform: 'webPC', deviceId: crypto.randomUUID() }), signal: AbortSignal.timeout(8000)
+              });
+              streams = [];
+              if (apiRes.ok) {
+                const data: any = await apiRes.json();
+                for (const mode of (data.data?.sourceModes || [])) for (const ms of (mode.multiSource || [])) for (const s of (ms.sources || [])) if (s.url && s.url.includes('.m3u8')) streams!.push({ url: s.url });
+              }
+              vtvgoFetchCache.set(vtvgoEntry.id, streams);
+            }
+            for (const s of (streams || [])) vtvgoCandidates.push({ url: s.url, source: 'VTVGo' });
+          } catch { /* ignore */ }
+        }
+
+        // 4b. Lấy candidates từ XemTV (Fuzzy Match)
+        const xemtvCandidates: Array<{ url: string; source: 'XemTV' }> = [];
+        let xemtvEntry: any = undefined;
+        for (const k of searchKeys) { if (xemtvMap.has(k)) { xemtvEntry = xemtvMap.get(k); break; } }
+        if (!xemtvEntry) {
+          for (const [cacheKey, entry] of xemtvMap.entries()) {
+            if (Array.from(searchKeys).some(k => k.length > 3 && (cacheKey.includes(k) || k.includes(cacheKey)))) { xemtvEntry = entry; break; }
+          }
+        }
+        if (xemtvEntry) {
+          try {
+            const res = await extractXemtvChannelStream(xemtvEntry.url);
+            if (res && res.success && res.streamUrl) xemtvCandidates.push({ url: res.streamUrl, source: 'XemTV' });
+          } catch { /* ignore */ }
+        }
+
+        // 4c. Probe
+        const allCandidates = [...vtvgoCandidates, ...xemtvCandidates];
+        if (allCandidates.length === 0) { results.push({ slug, name: displayName, status: 'kept', oldUrl, note: 'Không tìm được link mới' }); kept++; continue; }
+        
+        const uniqueCandidates = Array.from(new Map(allCandidates.map(c => [c.url, c])).values());
+        const probed: any[] = [];
+        let idx = 0;
+        await Promise.all(Array.from({ length: Math.min(3, uniqueCandidates.length) }, async () => {
+          while (true) {
+            const myIdx = idx++; if (myIdx >= uniqueCandidates.length) return;
+            const c = uniqueCandidates[myIdx];
+            const probe = await probeManifest(c.url, c.source === 'VTVGo' ? 'https://vtvgo.vn/' : 'https://hd1.xemtv.net/', 5000);
+            probed.push({ url: c.url, source: c.source, score: qualityScore(probe), quality: probe ? `${probe.resolutionStr}${probe.bitrateKbps ? ' - ' + probe.bitrateKbps : ''}` : undefined });
+          }
+        }));
+        probed.sort((a, b) => b.score - a.score);
+        const best = probed[0];
+
+        if (!best) { results.push({ slug, name: displayName, status: 'kept', oldUrl, note: 'Probe thất bại' }); kept++; continue; }
+
+        if (best.url === oldUrl) { results.push({ slug, name: displayName, status: 'kept', oldUrl, newUrl: best.url, quality: best.quality, source: best.source, note: 'Trùng link cũ' }); kept++; }
+        else { lines[urlLineIdx] = best.url; results.push({ slug, name: displayName, status: 'found', oldUrl, newUrl: best.url, quality: best.quality, source: best.source, note: 'Đã thay link' }); replaced++; }
+      }
+
+      // 5. Commit
+      let commitUrl, githubSynced = false; const m3uDirty = replaced > 0;
+      if (m3uDirty) {
+        const newContent = '\uFEFF' + lines.join(useCRLF ? '\r\n' : '\n');
+        fs.writeFileSync(path.resolve(__dirname, 'tvPremium.m3u'), newContent, 'utf8');
+        const getRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${m3uFile}?ref=${cleanBranch}`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } });
+        const sha = getRes.ok ? (await getRes.json()).sha : undefined;
+        const putRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${m3uFile}`, {
+          method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Smart Replace (${replaced} links)`, content: Buffer.from(newContent).toString('base64'), branch: cleanBranch, sha })
+        });
+        if (putRes.ok) { githubSynced = true; commitUrl = (await putRes.json()).commit?.html_url; }
+      }
+
+      return res.json({
+        success: true, total: slugs.length, replaced, kept, failed, results, m3uDirty, githubSynced, commitUrl,
+        message: m3uDirty ? `Đã thay ${replaced} link, giữ ${kept}, lỗi ${failed}.` : `Không có link thay đổi.`
+      });
+    } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
+  });
+
   app.get(['/tvPremium.m3u', '/api/playlist/tvPremium.m3u'], (req, res) => {
     const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
     if (fs.existsSync(targetPath)) {
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8');
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Content-Disposition', 'inline; filename="tvPremium.m3u"');
       return res.sendFile(targetPath);
     }
-    return res.status(404).send('#EXTM3U\n# File tvPremium.m3u chua duoc tao. Vui long scan va luu tu giao dien.');
+    return res.status(404).send('#EXTM3U\n# File chua duoc tao.');
   });
 
-  // ===== BACKGROUND SCHEDULER: 01:00 AM & 13:00 PM (Asia/Ho_Chi_Minh) =====
-  let lastScheduleRunDate: string = '';
-  let isScheduleScanning: boolean = false;
-  let scheduleLogs: Array<{ time: string; message: string; success: boolean }> = [];
-
-  function addScheduleLog(message: string, success = true) {
-    const vnTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-    scheduleLogs.unshift({ time: vnTime, message, success });
-    if (scheduleLogs.length > 20) scheduleLogs.pop();
-    console.log(`[Scheduler ${vnTime}] ${message}`);
-  }
-
-  async function triggerScheduledVtvgoScan(source: string = 'Schedule') {
-    if (isScheduleScanning) {
-      return { success: false, message: 'Đang có một tiến trình quét VTVGo chạy ngầm.' };
-    }
-    isScheduleScanning = true;
-    addScheduleLog(`Bắt đầu tiến trình quét tự động VTVGo (${source})...`);
+  // Scheduler...
+  let lastScheduleRunDate = '', isScheduleScanning = false; let scheduleLogs: any[] = [];
+  function addScheduleLog(message: string, success = true) { scheduleLogs.unshift({ time: new Date().toLocaleString('vi-VN'), message, success }); if (scheduleLogs.length > 20) scheduleLogs.pop(); }
+  async function triggerScheduledVtvgoScan(source: string) {
+    if (isScheduleScanning) return { success: false };
+    isScheduleScanning = true; addScheduleLog(`Bắt đầu quét (${source})...`);
     try {
-      const scanResult = await runVtvgoUpdate();
-      addScheduleLog(`Quét VTVGo thành công: ${scanResult.totalStreams} luồng được cập nhật vào tvPremium.m3u.`);
-
-      // Check if GitHub auto-sync config exists
-      const configPath = path.resolve(__dirname, 'server-config.json');
-      let ghToken = process.env.GITHUB_TOKEN || '';
-      let ghRepo = 'thanhthovn/tvPremium';
-      let ghBranch = 'main';
-
-      if (fs.existsSync(configPath)) {
-        try {
-          const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-          if (cfg.ghToken) ghToken = cfg.ghToken;
-          if (cfg.ghRepo) ghRepo = cfg.ghRepo;
-          if (cfg.ghBranch) ghBranch = cfg.ghBranch;
-        } catch {}
-      }
-
+      const scanResult = await runVtvgoUpdate(); addScheduleLog(`Quét xong: ${scanResult.totalStreams} luồng.`);
+      const cfgPath = path.resolve(__dirname, 'server-config.json'); let ghToken = process.env.GITHUB_TOKEN || '', ghRepo = 'thanhthovn/tvPremium', ghBranch = 'main';
+      if (fs.existsSync(cfgPath)) { const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); ghToken = cfg.ghToken || ghToken; ghRepo = cfg.ghRepo || ghRepo; ghBranch = cfg.ghBranch || ghBranch; }
       if (ghToken && ghRepo) {
-        addScheduleLog(`Đang tự động đồng bộ lên GitHub (${ghRepo})...`);
-        const targetFilePath = 'tvPremium.m3u';
         const fileContent = fs.readFileSync(path.resolve(__dirname, 'tvPremium.m3u'), 'utf8');
-        const base64Content = Buffer.from(fileContent, 'utf8').toString('base64');
-        const cleanRepo = ghRepo.replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '');
-
-        let existingSha: string | null = null;
-        try {
-          const getRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${targetFilePath}?ref=${ghBranch}`, {
-            headers: {
-              'Authorization': `Bearer ${ghToken}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'User-Agent': 'AIStudio-AutoScheduler',
-            },
-          });
-          if (getRes.ok) {
-            const data: any = await getRes.json();
-            existingSha = data.sha || null;
-          }
-        } catch {}
-
-        const putRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/${targetFilePath}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${ghToken}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'AIStudio-AutoScheduler',
-          },
-          body: JSON.stringify({
-            message: `Auto-scan VTVGo (${scanResult.totalStreams} channels) [01:00 & 13:00 VN Schedule]`,
-            content: base64Content,
-            branch: ghBranch,
-            sha: existingSha || undefined,
-          }),
-        });
-
-        if (putRes.ok) {
-          addScheduleLog(`Đã tự động đẩy thành công lên GitHub (${cleanRepo}/${targetFilePath})!`);
-        } else {
-          const errData: any = await putRes.json().catch(() => ({}));
-          addScheduleLog(`Không thể đẩy lên GitHub: ${errData.message || putRes.statusText}`, false);
-        }
-      } else {
-        addScheduleLog('Chưa có GitHub Token trong cấu hình server, chỉ lưu file tvPremium.m3u cục bộ.');
+        const cleanRepo = ghRepo.replace(/^https?:\/\/github\.com\//i, '');
+        const getRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/tvPremium.m3u?ref=${ghBranch}`, { headers: { 'Authorization': `Bearer ${ghToken}` } });
+        const sha = getRes.ok ? (await getRes.json()).sha : undefined;
+        const putRes = await fetch(`https://api.github.com/repos/${cleanRepo}/contents/tvPremium.m3u`, { method: 'PUT', headers: { 'Authorization': `Bearer ${ghToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Auto-scan`, content: Buffer.from(fileContent).toString('base64'), branch: ghBranch, sha }) });
+        if (putRes.ok) addScheduleLog(`Đã đẩy lên GitHub!`); else addScheduleLog(`Lỗi đẩy GitHub`, false);
       }
-
       return { success: true, scanResult };
-    } catch (err: any) {
-      addScheduleLog(`Lỗi tiến trình quét: ${err.message}`, false);
-      return { success: false, error: err.message };
-    } finally {
-      isScheduleScanning = false;
-    }
+    } catch (err: any) { addScheduleLog(`Lỗi: ${err.message}`, false); return { success: false, error: err.message }; } finally { isScheduleScanning = false; }
   }
-
-  // Timer: Check every 60 seconds
   setInterval(() => {
-    try {
-      const vnTimeStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const vnDate = new Date(vnTimeStr);
-      const hours = vnDate.getHours();
-      const minutes = vnDate.getMinutes();
-
-      // Trigger at 01:00 AM (1h sáng) and 13:00 PM (1h chiều)
-      if ((hours === 1 || hours === 13) && minutes === 0) {
-        const dateKey = `${vnDate.getFullYear()}-${vnDate.getMonth() + 1}-${vnDate.getDate()}_${hours}`;
-        if (lastScheduleRunDate !== dateKey) {
-          lastScheduleRunDate = dateKey;
-          triggerScheduledVtvgoScan(`Auto-Schedule ${hours}:00 VN Time`);
-        }
-      }
-    } catch (e: any) {
-      console.error('Lỗi timer scheduler:', e.message);
+    const vnDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+    if ((vnDate.getHours() === 1 || vnDate.getHours() === 13) && vnDate.getMinutes() === 0) {
+      const dateKey = `${vnDate.getFullYear()}-${vnDate.getMonth() + 1}-${vnDate.getDate()}_${vnDate.getHours()}`;
+      if (lastScheduleRunDate !== dateKey) { lastScheduleRunDate = dateKey; triggerScheduledVtvgoScan(`Auto-Schedule`); }
     }
   }, 60000);
 
-  // API: Get schedule status and recent logs
   app.get('/api/schedule-status', (req, res) => {
-    const vnTimeNow = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
     const vnDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-    const hours = vnDate.getHours();
-
-    let nextRunTime = '';
-    if (hours < 1) {
-      nextRunTime = '01:00 AM hôm nay';
-    } else if (hours < 13) {
-      nextRunTime = '13:00 PM (1h chiều) hôm nay';
-    } else {
-      nextRunTime = '01:00 AM ngày mai';
-    }
-
-    return res.json({
-      enabled: true,
-      schedule: 'Mỗi ngày 2 lần vào lúc 01:00 AM và 13:00 PM (Giờ Việt Nam UTC+7)',
-      timezone: 'Asia/Ho_Chi_Minh',
-      serverVnTime: vnTimeNow,
-      nextRun: nextRunTime,
-      isRunning: isScheduleScanning,
-      lastRunDate: lastScheduleRunDate,
-      logs: scheduleLogs,
-    });
+    let nextRun = vnDate.getHours() < 1 ? '01:00 AM' : vnDate.getHours() < 13 ? '13:00 PM' : '01:00 AM ngày mai';
+    return res.json({ enabled: true, schedule: '01:00 & 13:00', serverVnTime: new Date().toLocaleString('vi-VN'), nextRun, isRunning: isScheduleScanning, logs: scheduleLogs });
   });
 
-  // API: Trigger scan immediately from UI
   app.post('/api/trigger-scheduled-scan', async (req, res) => {
-    const { ghToken, ghRepo, ghBranch } = req.body || {};
-    if (ghToken || ghRepo) {
-      const configPath = path.resolve(__dirname, 'server-config.json');
-      fs.writeFileSync(configPath, JSON.stringify({ ghToken, ghRepo, ghBranch }), 'utf8');
-    }
-
-    const result = await triggerScheduledVtvgoScan('Yêu cầu thủ công từ giao diện');
-    return res.json(result);
+    const { ghToken, ghRepo, ghBranch } = req.body || {}; if (ghToken || ghRepo) fs.writeFileSync(path.resolve(__dirname, 'server-config.json'), JSON.stringify({ ghToken, ghRepo, ghBranch }), 'utf8');
+    return res.json(await triggerScheduledVtvgoScan('Manual'));
   });
 
-  // Vite middleware in dev or static files in prod
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
-    });
+    app.get('*', (req, res) => res.sendFile(path.resolve(__dirname, 'dist', 'index.html')));
   } else {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+    app.use((await createViteServer({ server: { middlewareMode: true }, appType: 'spa' })).middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running at http://0.0.0.0:${PORT}`);
-  });
+  app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
 }
 
 startServer();
