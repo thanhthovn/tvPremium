@@ -1,21 +1,90 @@
 ﻿#EXTM3U
 #EXTINF:-1 tvg-name="VTV1",VTV1 (1920x1080 - 3359kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029307/vtv1/playlist.m3u8?hdnts=exp=1792818943~acl=/hls/live/2029307/vtv1/*~hmac=dfc52b4c0e5f3f5ca1e66f82d6ca1af0b4f0478b6a08150cff8533c941523b28
+https://vtv-live-push-token.akamaized.net/hls/live/2029307/vtv1/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029307/vtv1/*~hmac=6b7328b80812ecd8463c0ecc260ecb334f5b0877af0a9999d60e10398bdd752b
 
 #EXTINF:-1 tvg-name="VTV2",VTV2 (1920x1080 - 3314kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792818943~acl=/hls/live/2029308/vtv2/*~hmac=2a49ad5476f73b6b5408b8db77c96e815fafd460a4c3ea56f86b980ac34453f9
+https://vtv-live-push-token.akamaized.net/hls/live/2029308/vtv2/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029308/vtv2/*~hmac=9fa49e626d824cf4876dc1ec2266e2daf7e76b1642c7a1aeac165886815f88ab
 
 #EXTINF:-1 tvg-name="VTV3",VTV3 (1920x1080 - 3323kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029309/vtv3/playlist.m3u8?hdnts=exp=1792818943~acl=/hls/live/2029309/vtv3/*~hmac=4b75b30cb493e8e3d53e358814f8dc4ac3d0b1bfc10c27f1c90fb45702e2f26d
+https://vtv-live-push-token.akamaized.net/hls/live/2029309/vtv3/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029309/vtv3/*~hmac=5a0c8d48355e795a843ffa229dfc96b4efb8126974ed4c3c52ced5a6bba700b0
 
 #EXTINF:-1 tvg-name="VTV4",VTV4 (1920x1080 - 3390kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029310/vtv4/playlist.m3u8?hdnts=exp=1792818943~acl=/hls/live/2029310/vtv4/*~hmac=966c503b6179493bb3314290933bf9a122d132145d49d2a87558ccd232f0d0d5
+https://vtv-live-push-token.akamaized.net/hls/live/2029310/vtv4/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029310/vtv4/*~hmac=83a1d61f93a42e3b0540254375987f39d03c0012ca40c0248aecbdfa06def34c
 
 #EXTINF:-1 tvg-name="VTV5",VTV5 (1920x1080 - 3307kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029311/vtv5/playlist.m3u8?hdnts=exp=1792818943~acl=/hls/live/2029311/vtv5/*~hmac=f73225661cc0bd2a60eff7a1fa18821bfe920ddafb1cb27256a2f7be10d24a36
+https://vtv-live-push-token.akamaized.net/hls/live/2029311/vtv5/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029311/vtv5/*~hmac=cfc39009a8673b0415b838d905deefa6c578bc93f32e2bb689dae544b78c6c50
+
+#EXTINF:-1 tvg-name="VTV6",VTV6 (854x480 - 948kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2125536/vtv6tt/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2125536/vtv6tt/*~hmac=d69cccc027022f306d9f808fa1de538707a9d426edb2c06c4e5b267787acd077
+
+#EXTINF:-1 tvg-name="VTV7",VTV7 (1920x1080 - 3323kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029315/vtv7/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029315/vtv7/*~hmac=b6125939a89fdca550b07c91d9f35a7372680c5ba5eb5bb48c09e9d5099d358d
+
+#EXTINF:-1 tvg-name="VTV8",VTV8 (1920x1080 - 3333kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029316/vtv8/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029316/vtv8/*~hmac=fe15b181836454a0fbe95561bcbddf4de4d33e5c65a74ac525c989dfd58afa18
+
+#EXTINF:-1 tvg-name="VTV9",VTV9 (1920x1080 - 3273kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029317/vtv9/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029317/vtv9/*~hmac=672d4e4dec96aa20f4ce48c2bd90b6017cdf23c3112bd0444056581ddc144cee
 
 #EXTINF:-1 tvg-name="VTV10",VTV10 (1920x1080 - 3363kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792818943~acl=/hls/live/2029314/vtv6/*~hmac=2e70521df28b855343a907ade2c10b2e0c9b99b42a7290dcb7cfec484e36e3b9
+https://vtv-live-push-token.akamaized.net/hls/live/2029314/vtv6/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029314/vtv6/*~hmac=ae54479f93569b612ee29bdf4ce8637f5bd3b616b9d89996a4fae375ea43620f
 
 #EXTINF:-1 tvg-name="VTV5 Tây Nam Bộ",VTV5 Tây Nam Bộ (1920x1080 - 3310kbps)
-https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792818943~acl=/hls/live/2029313/vtv5tnb/*~hmac=8cbf4916bd63f5b1896efccd507e5a8c607dbe3a8ed9209e529d48149c935e46
+https://vtv-live-push-token.akamaized.net/hls/live/2029313/vtv5tnb/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029313/vtv5tnb/*~hmac=56780495676212c04324c30e5627f17a6d192cf8b9a5cf8d0d0ded8085cffe1b
+
+#EXTINF:-1 tvg-name="VTV5 Tây Nguyên",VTV5 Tây Nguyên (1920x1080 - 7562kbps)
+https://vtv-live-push-token.akamaized.net/hls/live/2029312/vtv5tn/playlist.m3u8?hdnts=exp=1792819749~acl=/hls/live/2029312/vtv5tn/*~hmac=4755d5168163279ac83f0bfc4feddb813b5d4431871181fcda4da3df1830e277
+
+#EXTINF:-1 tvg-name="Truyền hình An Giang",Truyền hình An Giang (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/ANGIANGTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Bắc Ninh",Truyền hình Bắc Ninh (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/BACGIANGTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Công an Nhân dân",Truyền hình Công an Nhân dân (1920x1080 - 5523kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/ANNINHTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Đà Nẵng 1",Truyền hình Đà Nẵng 1 (1280x720 - 4017kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/DANANGTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Đồng Tháp 1",Truyền hình Đồng Tháp 1 (1280x720 - 4998kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/DONGTHAPTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Hà Nội 1",Truyền hình Hà Nội 1 (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HANOI1TV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Hà Nội 2",Truyền hình Hà Nội 2 (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HANOI2/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Hải Phòng 3",Truyền hình Hải Phòng 3
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HAIDUONGTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Hưng Yên",Truyền hình Hưng Yên (1280x720 - 3847kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/HUNGYENTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Khánh Hòa",Truyền hình Khánh Hòa (1280x720 - 4017kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/KHANHHOATV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Nghệ An",Truyền hình Nghệ An (1280x720 - 3902kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/NGHEANTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Ninh Bình",Truyền hình Ninh Bình (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/NINHBINHTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Phú Thọ",Truyền hình Phú Thọ (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/PHUTHOTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Quảng Ninh 1",Truyền hình Quảng Ninh 1 (1280x720 - 3847kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/QUANGNINHTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Quốc phòng Việt Nam",Truyền hình Quốc phòng Việt Nam (960x540 - 2586kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/QPTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Tây Ninh 2",Truyền hình Tây Ninh 2
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/TAYNINHTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Thái Nguyên",Truyền hình Thái Nguyên (1280x720 - 4927kbps)
+https://vtvgolive-liveh34.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/THAINGUYENTV/index.m3u8
+
+#EXTINF:-1 tvg-name="Truyền hình Thanh Hóa",Truyền hình Thanh Hóa (1280x720 - 3902kbps)
+https://vtvgolive-liveh12.vtvdigital.vn/ABVMhcmNPkXipsmLdThnMw/1792819749/hls/THANHHOATV/index.m3u8
