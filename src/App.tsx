@@ -69,10 +69,17 @@ export default function App() {
   const [tempBranch, setTempBranch] = useState(ghBranch);
   const [showGhToken, setShowGhToken] = useState(false);
 
-  // Trạng thái Quét Web
+  // Trạng thái Quét Web & Portal
   const [inputUrl, setInputUrl] = useState('https://vtvgo.vn/channel/1');
   const [isScanning, setIsScanning] = useState(false);
+  const [isScanningVtvgo, setIsScanningVtvgo] = useState(false);
+  const [isScanningXemtv, setIsScanningXemtv] = useState(false);
+  const [vtvStartId, setVtvStartId] = useState<number>(1);
+  const [vtvEndId, setVtvEndId] = useState<number>(100);
+  const [vtvScanMode, setVtvScanMode] = useState<'range' | 'portal'>('range');
   const [scanStatus, setScanStatus] = useState<string | null>(null);
+  const [scannedStreamsResult, setScannedStreamsResult] = useState<ExtractedStream[]>([]);
+  const [scannedM3uContent, setScannedM3uContent] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -264,6 +271,84 @@ export default function App() {
       setScanStatus('Lỗi: ' + e.message);
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const handleScanVtvgo = async (customMode?: 'range' | 'portal') => {
+    if (isScanningVtvgo || isScanningXemtv || isScanning) return;
+    const mode = customMode || vtvScanMode;
+    const s = Math.max(1, Number(vtvStartId) || 1);
+    const e = Math.max(s, Number(vtvEndId) || 100);
+
+    setIsScanningVtvgo(true);
+    setScanStatus(
+      mode === 'range'
+        ? `Đang quét các kênh VTVGo từ ID ${s} đến ${e}, tự động dò luồng m3u8 và đo lường chất lượng cao nhất...`
+        : `Đang quét toàn bộ danh mục VTVGo Portal và kiểm tra chất lượng cao nhất...`
+    );
+    setScannedStreamsResult([]);
+    setScannedM3uContent(null);
+    try {
+      const res = await fetch('/api/scan-vtvgo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startId: s,
+          endId: e,
+          mode,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Quét VTVGo thất bại');
+      
+      if (data.streams && data.streams.length > 0) {
+        setScannedStreamsResult(data.streams);
+        if (data.m3uContent) setScannedM3uContent(data.m3uContent);
+        setExtractedStreams(data.streams);
+        setActiveStreamUrl(data.streams[0].url);
+        setScanStatus(
+          mode === 'range'
+            ? `Quét dải ID ${s} - ${e} hoàn tất! Đã trích xuất ${data.streams.length} kênh m3u8 chất lượng cao và cập nhật vào playlist.`
+            : `Đã quét VTVGo thành công! Trích xuất ${data.streams.length} kênh m3u8 chất lượng cao và cập nhật vào playlist.`
+        );
+      } else {
+        setScanStatus(`Quét xong dải ID ${s} - ${e} nhưng không tìm thấy luồng nào.`);
+      }
+    } catch (e: any) {
+      setScanStatus('Lỗi khi quét VTVGo: ' + e.message);
+    } finally {
+      setIsScanningVtvgo(false);
+    }
+  };
+
+  const handleScanXemtv = async () => {
+    if (isScanningVtvgo || isScanningXemtv || isScanning) return;
+    setIsScanningXemtv(true);
+    setScanStatus('Đang quét danh mục XemTV, giải mã player và trích xuất luồng m3u8...');
+    setScannedStreamsResult([]);
+    setScannedM3uContent(null);
+    try {
+      const res = await fetch('/api/scan-xemtv-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 120 }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Quét XemTV thất bại');
+      
+      if (data.streams && data.streams.length > 0) {
+        setScannedStreamsResult(data.streams);
+        if (data.m3uContent) setScannedM3uContent(data.m3uContent);
+        setExtractedStreams(data.streams);
+        setActiveStreamUrl(data.streams[0].url);
+        setScanStatus(`Đã quét XemTV thành công! Phát hiện ${data.channelsDiscovered || data.channelsCount} kênh, trích xuất ${data.streams.length} luồng m3u8.`);
+      } else {
+        setScanStatus('Quét hoàn tất nhưng không trích xuất được luồng nào.');
+      }
+    } catch (e: any) {
+      setScanStatus('Lỗi khi quét XemTV: ' + e.message);
+    } finally {
+      setIsScanningXemtv(false);
     }
   };
 
@@ -587,22 +672,282 @@ export default function App() {
 
             {/* TAB QUÉT LINK */}
             {activeTunningTab === 'scan' && (
-              <div className="space-y-6 max-w-2xl mx-auto">
-                 <div className="bg-[#1a2019] border border-[#2a3327] rounded-2xl p-6 shadow-xl space-y-4">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2"><Search className="w-5 h-5 text-[#a3b18a]"/> Trích xuất link từ Web</h3>
+              <div className="space-y-6 max-w-3xl mx-auto">
+                 {/* 1. KHU VỰC QUÉT PORTAL TỰ ĐỘNG */}
+                 <div className="space-y-3">
+                   <div>
+                     <h3 className="text-base font-bold text-white flex items-center gap-2">
+                       <Zap className="w-5 h-5 text-[#a3b18a]" /> Quét Tự Động Cổng Truyền Hình (Portals)
+                     </h3>
+                     <p className="text-xs text-[#8a9a7b]">
+                       Hệ thống tự động dò danh mục kênh, trích xuất luồng m3u8 trực tiếp và kiểm tra chất lượng cao nhất.
+                     </p>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     {/* THẺ QUÉT VTVGO */}
+                     <div className="bg-[#1a2019] border border-[#2a3327] rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-4 hover:border-[#4a593d] transition">
+                       <div className="space-y-3">
+                         <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-2.5">
+                             <div className="w-9 h-9 rounded-xl bg-[#2a3327] flex items-center justify-center border border-[#4a593d]">
+                               <Tv className="w-5 h-5 text-[#a3b18a]" />
+                             </div>
+                             <div>
+                               <h4 className="font-bold text-sm text-white">Quét VTVGo</h4>
+                               <span className="text-[10px] text-[#a3b18a] font-mono uppercase bg-[#121612] px-2 py-0.5 rounded border border-[#2a3327]">Chính thống VTV</span>
+                             </div>
+                           </div>
+
+                           {/* Tab toggle: Dải ID vs Portal */}
+                           <div className="flex rounded-lg bg-[#121612] p-0.5 border border-[#2a3327]">
+                             <button
+                               onClick={() => setVtvScanMode('range')}
+                               className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition ${vtvScanMode === 'range' ? 'bg-[#4a593d] text-white shadow' : 'text-[#8a9a7b] hover:text-[#d1d5db]'}`}
+                             >
+                               Theo dải ID
+                             </button>
+                             <button
+                               onClick={() => setVtvScanMode('portal')}
+                               className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition ${vtvScanMode === 'portal' ? 'bg-[#4a593d] text-white shadow' : 'text-[#8a9a7b] hover:text-[#d1d5db]'}`}
+                             >
+                               Portal (Auto)
+                             </button>
+                           </div>
+                         </div>
+
+                         {/* Khu vực chọn dải ID: từ ... đến ... */}
+                         {vtvScanMode === 'range' ? (
+                           <div className="space-y-2 bg-[#121612]/70 p-3 rounded-xl border border-[#2a3327]">
+                             <div className="flex items-center justify-between text-xs text-[#a3b18a] font-semibold">
+                               <span>Quét kênh từ ... đến ...</span>
+                               <span className="text-[11px] font-mono text-[#8a9a7b]">ID 1 ~ 299</span>
+                             </div>
+                             <div className="flex items-center gap-2">
+                               <div className="flex-1">
+                                 <label className="text-[10px] text-[#8a9a7b] block mb-0.5">Từ ID:</label>
+                                 <input
+                                   type="number"
+                                   min={1}
+                                   max={299}
+                                   value={vtvStartId}
+                                   onChange={e => setVtvStartId(Math.max(1, parseInt(e.target.value) || 1))}
+                                   className="w-full bg-[#1a2019] border border-[#3a4535] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#5e6d4e]"
+                                 />
+                               </div>
+                               <span className="text-xs text-[#8a9a7b] pt-4 font-bold">→</span>
+                               <div className="flex-1">
+                                 <label className="text-[10px] text-[#8a9a7b] block mb-0.5">Đến ID:</label>
+                                 <input
+                                   type="number"
+                                   min={vtvStartId}
+                                   max={299}
+                                   value={vtvEndId}
+                                   onChange={e => setVtvEndId(Math.max(1, parseInt(e.target.value) || 1))}
+                                   className="w-full bg-[#1a2019] border border-[#3a4535] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#5e6d4e]"
+                                 />
+                               </div>
+                             </div>
+
+                             {/* Nút chọn nhanh (Presets) */}
+                             <div className="flex items-center gap-1.5 pt-1">
+                               <span className="text-[10px] text-[#8a9a7b]">Nhanh:</span>
+                               {[
+                                 { label: '1 - 50', s: 1, e: 50 },
+                                 { label: '1 - 100', s: 1, e: 100 },
+                                 { label: '1 - 200', s: 1, e: 200 },
+                                 { label: '1 - 299', s: 1, e: 299 },
+                               ].map(p => (
+                                 <button
+                                   key={p.label}
+                                   type="button"
+                                   onClick={() => { setVtvStartId(p.s); setVtvEndId(p.e); }}
+                                   className={`px-2 py-0.5 rounded text-[10px] font-mono transition border ${vtvStartId === p.s && vtvEndId === p.e ? 'bg-[#4a593d] text-white border-[#5e6d4e]' : 'bg-[#1a2019] text-[#8a9a7b] border-[#2a3327] hover:border-[#4a593d]'}`}
+                                 >
+                                   {p.label}
+                                 </button>
+                               ))}
+                             </div>
+                           </div>
+                         ) : (
+                           <p className="text-xs text-[#8a9a7b] leading-relaxed bg-[#121612]/50 p-3 rounded-xl border border-[#2a3327]">
+                             Tự động quét danh mục toàn bộ kênh đang trực tuyến trên portal VTVGo.vn (gồm VTV1-VTV9, VTV Cần Thơ, các đài địa phương) và lấy luồng chất lượng 1080p cao nhất.
+                           </p>
+                         )}
+                       </div>
+
+                       <button
+                         onClick={() => handleScanVtvgo()}
+                         disabled={isScanningVtvgo || isScanningXemtv || isScanning}
+                         className="w-full py-3 bg-[#4a593d] hover:bg-[#5e6d4e] disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition shadow-lg border border-[#5e6d4e] cursor-pointer"
+                       >
+                         {isScanningVtvgo ? (
+                           <>
+                             <Loader2 className="w-4 h-4 animate-spin text-[#a3b18a]" />
+                             <span>Đang quét VTVGo (ID {vtvStartId} - {vtvEndId})...</span>
+                           </>
+                         ) : (
+                           <>
+                             <Tv className="w-4 h-4" />
+                             <span>
+                               {vtvScanMode === 'range'
+                                 ? `Bắt đầu quét kênh ID ${vtvStartId} đến ${vtvEndId}`
+                                 : 'Bắt đầu quét toàn bộ Portal'}
+                             </span>
+                           </>
+                         )}
+                       </button>
+                     </div>
+
+                     {/* THẺ QUÉT XEMTV */}
+                     <div className="bg-[#1a2019] border border-[#2a3327] rounded-2xl p-5 shadow-xl flex flex-col justify-between gap-4 hover:border-[#4a593d] transition">
+                       <div className="space-y-2">
+                         <div className="flex items-center gap-2.5">
+                           <div className="w-9 h-9 rounded-xl bg-[#2a3327] flex items-center justify-center border border-[#4a593d]">
+                             <Globe className="w-5 h-5 text-[#a3b18a]" />
+                           </div>
+                           <div>
+                             <h4 className="font-bold text-sm text-white">Quét XemTV Portal</h4>
+                             <span className="text-[10px] text-[#a3b18a] font-mono uppercase bg-[#121612] px-2 py-0.5 rounded border border-[#2a3327]">Đa kênh giải trí</span>
+                           </div>
+                         </div>
+                         <p className="text-xs text-[#8a9a7b] leading-relaxed">
+                           Quét danh mục XemTV, phân tích giải mã các trình phát iframe và JWPlayer để trích xuất trực tiếp luồng stream .m3u8 chất lượng cao.
+                         </p>
+                       </div>
+                       <button
+                         onClick={handleScanXemtv}
+                         disabled={isScanningVtvgo || isScanningXemtv || isScanning}
+                         className="w-full py-3 bg-[#2a3327] hover:bg-[#3a4535] disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition shadow-lg border border-[#4a593d] cursor-pointer"
+                       >
+                         {isScanningXemtv ? (
+                           <>
+                             <Loader2 className="w-4 h-4 animate-spin text-[#a3b18a]" />
+                             <span>Đang quét XemTV...</span>
+                           </>
+                         ) : (
+                           <>
+                             <Globe className="w-4 h-4" />
+                             <span>Bắt đầu Quét XemTV</span>
+                           </>
+                         )}
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* THANH THÔNG BÁO TIẾN TRÌNH / KẾT QUẢ */}
+                 {scanStatus && (
+                   <div className="bg-[#1a2019] border border-[#3a4535] rounded-xl p-4 flex items-center gap-3 shadow-lg animate-in fade-in">
+                     {(isScanning || isScanningVtvgo || isScanningXemtv) ? (
+                       <Loader2 className="w-5 h-5 text-[#a3b18a] animate-spin shrink-0" />
+                     ) : (
+                       <CheckCircle2 className="w-5 h-5 text-[#a3b18a] shrink-0" />
+                     )}
+                     <p className="text-xs text-[#d1d5db] flex-1 leading-relaxed">{scanStatus}</p>
+                   </div>
+                 )}
+
+                 {/* 2. TRÍCH XUẤT TỪ ĐƯỜNG DẪN WEB ĐƠN LẺ */}
+                 <div className="bg-[#1a2019] border border-[#2a3327] rounded-2xl p-5 shadow-xl space-y-3">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Search className="w-4 h-4 text-[#a3b18a]"/> Trích xuất link từ Web / URL cụ thể
+                    </h3>
                     <div className="flex gap-2">
-                      <input value={inputUrl} onChange={e => setInputUrl(e.target.value)} placeholder="https://..." className="flex-1 bg-[#121612] border border-[#3a4535] rounded-xl px-4 py-2.5 text-sm text-[#d1d5db] focus:outline-none focus:border-[#5e6d4e]" />
-                      <button onClick={handleScanUrl} disabled={isScanning} className="px-6 py-2.5 bg-[#4a593d] hover:bg-[#5e6d4e] text-white font-semibold rounded-xl flex items-center gap-2 border border-[#5e6d4e]">
-                        {isScanning ? <Loader2 className="w-4 h-4 animate-spin"/> : <Zap className="w-4 h-4"/>} Quét
+                      <input 
+                        value={inputUrl} 
+                        onChange={e => setInputUrl(e.target.value)} 
+                        placeholder="https://vtvgo.vn/channel/1 hoặc bất kỳ trang web nào..." 
+                        className="flex-1 bg-[#121612] border border-[#3a4535] rounded-xl px-4 py-2.5 text-xs text-[#d1d5db] focus:outline-none focus:border-[#5e6d4e]" 
+                      />
+                      <button 
+                        onClick={handleScanUrl} 
+                        disabled={isScanning || isScanningVtvgo || isScanningXemtv} 
+                        className="px-5 py-2.5 bg-[#4a593d] hover:bg-[#5e6d4e] disabled:opacity-50 text-white font-semibold text-xs rounded-xl flex items-center gap-2 border border-[#5e6d4e] cursor-pointer"
+                      >
+                        {isScanning ? <Loader2 className="w-4 h-4 animate-spin"/> : <Zap className="w-4 h-4"/>} 
+                        <span>Quét</span>
                       </button>
                     </div>
-                    {scanStatus && <p className="text-sm text-[#a3b18a] bg-[#1f261e] p-3 rounded-lg border border-[#2a3327]">{scanStatus}</p>}
                  </div>
-                 
-                 <div className="bg-[#1a2019] border border-[#2a3327] rounded-2xl p-6 shadow-xl grid grid-cols-2 gap-4">
-                    <button onClick={() => alert('Tính năng đang phát triển')} className="py-4 bg-[#2a3327] hover:bg-[#3a4535] border border-[#4a593d] rounded-xl flex flex-col items-center justify-center gap-2 text-[#d1d5db] font-semibold transition"><Tv className="w-6 h-6 text-[#a3b18a]"/> Quét VTVGo</button>
-                    <button onClick={() => alert('Tính năng đang phát triển')} className="py-4 bg-[#2a3327] hover:bg-[#3a4535] border border-[#4a593d] rounded-xl flex flex-col items-center justify-center gap-2 text-[#d1d5db] font-semibold transition"><Globe className="w-6 h-6 text-[#a3b18a]"/> Quét XemTV</button>
-                 </div>
+
+                 {/* 3. BẢNG HIỂN THỊ KẾT QUẢ KÊNH ĐÃ QUÉT ĐƯỢC */}
+                 {scannedStreamsResult.length > 0 && (
+                   <div className="bg-[#1a2019] border border-[#2a3327] rounded-2xl shadow-xl flex flex-col overflow-hidden">
+                     <div className="px-5 py-3.5 border-b border-[#2a3327] bg-[#1f261e] flex flex-wrap items-center justify-between gap-3">
+                       <div className="flex items-center gap-2">
+                         <ListVideo className="w-4 h-4 text-[#a3b18a]" />
+                         <span className="text-sm font-bold text-white">Kết quả quét ({scannedStreamsResult.length} kênh)</span>
+                       </div>
+                       
+                       <div className="flex items-center gap-2">
+                         {scannedM3uContent && (
+                           <button
+                             onClick={() => {
+                               const blob = new Blob([scannedM3uContent], { type: 'application/vnd.apple.mpegurl;charset=utf-8' });
+                               const url = URL.createObjectURL(blob);
+                               const a = document.createElement('a'); a.href = url; a.download = 'tvPremium-scanned.m3u'; a.click(); URL.revokeObjectURL(url);
+                             }}
+                             className="px-3 py-1.5 bg-[#2a3327] hover:bg-[#3a4535] text-[#a3b18a] text-xs font-semibold rounded-lg flex items-center gap-1.5 border border-[#4a593d] transition"
+                           >
+                             <Download className="w-3.5 h-3.5" /> Tải M3U
+                           </button>
+                         )}
+                         <button
+                           onClick={() => {
+                             setIsTunningOpen(false);
+                             if (scannedStreamsResult[0]?.url) playStream(scannedStreamsResult[0].url);
+                           }}
+                           className="px-3 py-1.5 bg-[#4a593d] hover:bg-[#5e6d4e] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 border border-[#5e6d4e] transition"
+                         >
+                           <Play className="w-3.5 h-3.5" /> Xem Ngay
+                         </button>
+                       </div>
+                     </div>
+
+                     <div className="max-h-[320px] overflow-y-auto divide-y divide-[#2a3327]/60 p-2">
+                       {scannedStreamsResult.map((st, idx) => (
+                         <div 
+                           key={idx} 
+                           className="p-2.5 rounded-xl hover:bg-[#1f261e] flex items-center justify-between gap-3 transition"
+                         >
+                           <div className="flex items-center gap-3 min-w-0">
+                             <div className="w-8 h-8 rounded-lg bg-[#121612] border border-[#2a3327] flex items-center justify-center shrink-0 overflow-hidden">
+                               {st.logo ? (
+                                 <img src={st.logo} alt="" className="w-full h-full object-contain p-0.5" />
+                               ) : (
+                                 <Tv className="w-4 h-4 text-[#8a9a7b]" />
+                               )}
+                             </div>
+                             <div className="min-w-0">
+                               <p className="text-xs font-bold text-white truncate">{st.channelName || st.pageTitle || `Kênh ${idx + 1}`}</p>
+                               <p className="text-[10px] text-[#8a9a7b] font-mono truncate">{st.group || st.sourceType || 'Live Stream'}</p>
+                             </div>
+                           </div>
+
+                           <div className="flex items-center gap-2 shrink-0">
+                             <button
+                               onClick={() => copyText(st.url)}
+                               className="p-1.5 rounded-lg bg-[#121612] hover:bg-[#2a3327] text-[#8a9a7b] hover:text-[#d1d5db] border border-[#2a3327] transition"
+                               title="Sao chép link .m3u8"
+                             >
+                               <Copy className="w-3.5 h-3.5" />
+                             </button>
+                             <button
+                               onClick={() => {
+                                 playStream(st.url);
+                                 setIsTunningOpen(false);
+                               }}
+                               className="px-2.5 py-1 bg-[#4a593d] hover:bg-[#5e6d4e] text-white text-[11px] font-semibold rounded-lg flex items-center gap-1 border border-[#5e6d4e] transition"
+                             >
+                               <Play className="w-3 h-3" /> Phát
+                             </button>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
               </div>
             )}
 

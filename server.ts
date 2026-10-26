@@ -54,8 +54,8 @@ cantho1: ['Cần Thơ 1', 'Can Tho 1', 'CT1', 'Cần Thơ', 'THTPCT1', 'Truyền
 cantho2: ['Cần Thơ 2', 'Can Tho 2', 'CT2', 'THTPCT2', 'Truyền hình Cần Thơ 2'],
 cantho3: ['Cần Thơ 3', 'Can Tho 3', 'CT3', 'THTPCT3', 'Truyền hình Cần Thơ 3'],
 dongnai1: ['Đồng Nai 1', 'Đồng Nai', 'DNRT1 - TRUYỀN HÌNH ĐỒNG NAI 1 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 1'],
-dongnai1: ['Đồng Nai 2', 'Đồng Nai',  'DNRT2 - TRUYỀN HÌNH ĐỒNG NAI 2 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 2'],
-dongnai1: ['Đồng Nai 3', 'Đồng Nai',  'DNRT3 - TRUYỀN HÌNH ĐỒNG NAI 3 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 3'],
+dongnai2: ['Đồng Nai 2', 'Đồng Nai',  'DNRT2 - TRUYỀN HÌNH ĐỒNG NAI 2 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 2'],
+dongnai3: ['Đồng Nai 3', 'Đồng Nai',  'DNRT3 - TRUYỀN HÌNH ĐỒNG NAI 3 TRỰC TUYẾN', 'TRUYỀN HÌNH ĐỒNG NAI 3'],
 lamdong1: ['Lâm Đồng', 'Lâm Đồng 1', 'LTV1', 'LTV 1', 'Truyền hình Lâm Đồng 1'],
 lamdong2: ['LTV2', 'LTV 2', 'Lâm Đồng 2', 'Bình Thuận', 'Truyền hình Lâm Đồng 2'],
 vinhlong1: ['Vĩnh Long 1', 'THVL1', 'THVL 1', 'Truyền hình Vĩnh Long 1'],
@@ -379,20 +379,52 @@ async function startServer() {
     catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
   });
 
-  app.post('/api/scan-vtvgo-portal', async (req, res) => {
+  app.post(['/api/scan-vtvgo-portal', '/api/scan-vtvgo'], async (req, res) => {
     try {
-      const updateRes = await runVtvgoUpdate();
+      const { startId, endId, mode } = req.body || {};
+      const s = startId !== undefined ? Number(startId) : undefined;
+      const e = endId !== undefined ? Number(endId) : undefined;
+      const options = { mode: mode || (s !== undefined && e !== undefined ? 'range' : 'portal') };
+      const updateRes = await runVtvgoUpdate(s, e, options);
       const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
       let extracted: any[] = [];
+      let m3uContent = '';
       if (fs.existsSync(targetPath)) {
-        const lines = fs.readFileSync(targetPath, 'utf8').split(/\r?\n/); let curName = '';
+        m3uContent = fs.readFileSync(targetPath, 'utf8');
+        const lines = m3uContent.split(/\r?\n/);
+        let curName = '', curLogo = '', curGroup = 'VTV';
         for (const l of lines) {
           const t = l.trim();
-          if (t.startsWith('#EXTINF:')) { const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/); curName = m ? m[1].trim() : 'Kênh VTVGo'; } 
-          else if (t.startsWith('http')) extracted.push({ url: t, sourceType: curName, channelName: curName, pageTitle: `VTVGo - ${curName}` });
+          if (t.startsWith('#EXTINF:')) {
+            const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/);
+            curName = m ? m[1].trim() : 'Kênh VTVGo';
+            const logoMatch = t.match(/tvg-logo="([^"]+)"/);
+            curLogo = logoMatch ? logoMatch[1] : '';
+            const groupMatch = t.match(/group-title="([^"]+)"/);
+            curGroup = groupMatch ? groupMatch[1] : 'VTV';
+          } else if (t.startsWith('http')) {
+            extracted.push({
+              url: t,
+              sourceType: 'VTVGo',
+              channelName: curName,
+              pageTitle: `VTVGo - ${curName}`,
+              logo: curLogo,
+              group: curGroup,
+            });
+          }
         }
       }
-      return res.json({ success: true, channelsCount: updateRes.channelsCount, totalStreams: updateRes.totalStreams, streams: extracted });
+      return res.json({
+        success: true,
+        scannedRange: updateRes.scannedRange,
+        channelsCount: updateRes.channelsCount,
+        totalStreams: updateRes.totalStreams,
+        streams: extracted,
+        m3uContent,
+        message: options.mode === 'range'
+          ? `Đã quét dải kênh ${s || 1} đến ${e || 299} thành công! Tìm thấy ${updateRes.channelsCount} kênh.`
+          : `Đã quét VTVGo thành công! Tìm thấy ${updateRes.channelsCount} kênh.`
+      });
     } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
   });
 
@@ -403,20 +435,44 @@ async function startServer() {
 
   app.post('/api/scan-xemtv-portal', async (req, res) => {
     try {
-      const updateRes = await runXemtvUpdate({ limit: Number(req.body.limit) || 120 });
+      const limit = Number(req.body.limit) || 120;
+      const updateRes = await runXemtvUpdate({ limit });
       const targetPath = path.resolve(__dirname, 'tvPremium.m3u');
       let extracted: any[] = [];
+      let m3uContent = '';
       if (fs.existsSync(targetPath)) {
-        const lines = fs.readFileSync(targetPath, 'utf8').split(/\r?\n/); let curName = '', curLogo = '';
+        m3uContent = fs.readFileSync(targetPath, 'utf8');
+        const lines = m3uContent.split(/\r?\n/);
+        let curName = '', curLogo = '', curGroup = 'XemTV';
         for (const l of lines) {
           const t = l.trim();
           if (t.startsWith('#EXTINF:')) {
-            const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/); curName = m ? m[1].trim() : 'Kênh XemTV';
-            const logoMatch = t.match(/tvg-logo="([^"]+)"/); curLogo = logoMatch ? logoMatch[1] : '';
-          } else if (t.startsWith('http')) extracted.push({ url: t, sourceType: curName, channelName: curName, pageTitle: `XemTV - ${curName}`, logo: curLogo });
+            const m = t.match(/tvg-name="([^"]+)"/) || t.match(/,(.+)$/);
+            curName = m ? m[1].trim() : 'Kênh XemTV';
+            const logoMatch = t.match(/tvg-logo="([^"]+)"/);
+            curLogo = logoMatch ? logoMatch[1] : '';
+            const groupMatch = t.match(/group-title="([^"]+)"/);
+            curGroup = groupMatch ? groupMatch[1] : 'XemTV';
+          } else if (t.startsWith('http')) {
+            extracted.push({
+              url: t,
+              sourceType: 'XemTV',
+              channelName: curName,
+              pageTitle: `XemTV - ${curName}`,
+              logo: curLogo,
+              group: curGroup,
+            });
+          }
         }
       }
-      return res.json({ success: true, channelsDiscovered: updateRes.channelsDiscovered, channelsCount: updateRes.validStreamsCount, streams: extracted });
+      return res.json({
+        success: true,
+        channelsDiscovered: updateRes.channelsDiscovered,
+        channelsCount: updateRes.validStreamsCount,
+        streams: extracted,
+        m3uContent,
+        message: `Đã quét XemTV thành công! Phát hiện ${updateRes.channelsDiscovered} kênh, trích xuất ${updateRes.validStreamsCount} luồng.`
+      });
     } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
   });
 

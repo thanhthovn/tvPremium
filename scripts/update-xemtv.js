@@ -213,11 +213,17 @@ export async function runXemtvUpdate(options = {}) {
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
   console.log(`Đã dò được link cho ${validChannels.length}/${targetChannels.length} kênh!`);
 
-  for (const ch of validChannels) {
-    const probe = await probeM3u8Quality(ch.streamUrl);
-    ch.probe = probe;
-    ch.height = probe?.height || (ch.streamUrl.includes('1080') ? 1080 : ch.streamUrl.includes('720') ? 720 : 0);
-  }
+  let probeIndex = 0;
+  const probeWorker = async () => {
+    while (probeIndex < validChannels.length) {
+      const ch = validChannels[probeIndex++];
+      if (!ch) break;
+      const probe = await probeM3u8Quality(ch.streamUrl);
+      ch.probe = probe;
+      ch.height = probe?.height || (ch.streamUrl.includes('1080') ? 1080 : ch.streamUrl.includes('720') ? 720 : 0);
+    }
+  };
+  await Promise.all(Array.from({ length: 12 }, () => probeWorker()));
 
   validChannels.sort((a, b) => {
     const prioA = getChannelPriority(a.channelName), prioB = getChannelPriority(b.channelName);

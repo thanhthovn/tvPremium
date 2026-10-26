@@ -307,17 +307,39 @@ export async function discoverVtvgoChannels() {
 /**
  * Tiến trình chính: Tự động quét từ SCAN_START_ID đến SCAN_END_ID (hoặc tự động phát hiện toàn bộ kênh vtvgo.vn)
  */
-export async function runVtvgoUpdate(startId = SCAN_START_ID, endId = SCAN_END_ID) {
-  console.log(`[${new Date().toISOString()}] Bắt đầu tự động quét VTVGo...`);
+export async function runVtvgoUpdate(startId = SCAN_START_ID, endId = SCAN_END_ID, options = {}) {
+  const isRangeMode = options.mode === 'range' || options.useRangeOnly || (options.mode !== 'portal' && (startId !== SCAN_START_ID || endId !== SCAN_END_ID));
+  console.log(`[${new Date().toISOString()}] Bắt đầu quét VTVGo (chế độ: ${isRangeMode ? `Dải ID ${startId} -> ${endId}` : 'Portal tự động'})...`);
 
-  // Bước 1: Quét trang vtvgo.vn để phát hiện danh sách kênh trực tiếp
-  let targetChannels = await discoverVtvgoChannels();
+  let targetChannels = [];
+  if (isRangeMode) {
+    const s = Math.max(1, parseInt(startId, 10) || 1);
+    const e = Math.max(s, parseInt(endId, 10) || 299);
+    console.log(`Quét theo dải ID kênh từ ${s} đến ${e}...`);
+    
+    // Nạp cache danh sách kênh chính thống để gán logo/tên chuẩn nếu có
+    const discovered = await discoverVtvgoChannels().catch(() => []);
+    const discMap = new Map();
+    for (const d of discovered) discMap.set(String(d.channelId), d);
 
-  // Dự phòng nếu không lấy được danh sách động
-  if (targetChannels.length === 0) {
-    console.log('Không lấy được danh sách động từ portal, dùng dải ID dự phòng:', startId, '->', endId);
-    for (let i = startId; i <= endId; i++) {
-      targetChannels.push({ channelId: String(i), channelName: `Kênh ${i}` });
+    for (let i = s; i <= e; i++) {
+      const sId = String(i);
+      if (discMap.has(sId)) {
+        targetChannels.push(discMap.get(sId));
+      } else {
+        targetChannels.push({ channelId: sId, channelName: `Kênh ${i}` });
+      }
+    }
+  } else {
+    // Bước 1: Quét trang vtvgo.vn để phát hiện danh sách kênh trực tiếp
+    targetChannels = await discoverVtvgoChannels();
+
+    // Dự phòng nếu không lấy được danh sách động
+    if (targetChannels.length === 0) {
+      console.log('Không lấy được danh sách động từ portal, dùng dải ID dự phòng:', startId, '->', endId);
+      for (let i = startId; i <= endId; i++) {
+        targetChannels.push({ channelId: String(i), channelName: `Kênh ${i}` });
+      }
     }
   }
 
@@ -338,13 +360,23 @@ export async function runVtvgoUpdate(startId = SCAN_START_ID, endId = SCAN_END_I
 
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
 
-  // 1. Thăm dò và chọn duy nhất 1 link chất lượng cao nhất cho mỗi kênh
+  // 1. Thăm dò song song và chọn duy nhất 1 link chất lượng cao nhất cho mỗi kênh
+  const probeTasks = [];
   for (const ch of validChannels) {
     for (const st of ch.streams) {
+      probeTasks.push({ ch, st });
+    }
+  }
+
+  let probeIndex = 0;
+  const probeWorker = async () => {
+    while (probeIndex < probeTasks.length) {
+      const item = probeTasks[probeIndex++];
+      if (!item) break;
+      const { st } = item;
       const probe = await probeM3u8Quality(st.url);
       const height = probe?.height || (st.url.includes('1080') ? 1080 : st.url.includes('720') ? 720 : 0);
       const bitrate = probe?.bitrate || 0;
-      // Trọng số: Độ phân giải cao nhất (1080 > 720 > ...) -> Bitrate cao nhất -> Ưu tiên Direct Pre-Origin / Akamai / VTV
       let cdnBonus = 0;
       if (st.isDirectOrigin) cdnBonus = 100000;
       else if (st.cdn.includes('Akamai')) cdnBonus = 50000;
@@ -353,8 +385,10 @@ export async function runVtvgoUpdate(startId = SCAN_START_ID, endId = SCAN_END_I
       st.probe = probe;
       st.score = height * 10000000 + bitrate + cdnBonus;
     }
+  };
+  await Promise.all(Array.from({ length: 12 }, () => probeWorker()));
 
-    // Sắp xếp các luồng của kênh này từ cao xuống thấp và CHỈ giữ lại 1 luồng tốt nhất
+  for (const ch of validChannels) {
     ch.streams.sort((a, b) => b.score - a.score);
     ch.bestStream = ch.streams[0];
   }
