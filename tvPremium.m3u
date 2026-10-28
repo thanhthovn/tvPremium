@@ -1,21 +1,21 @@
 ﻿#EXTM3U
 #EXTINF:-1 tvg-id="vtv1" tvg-name="VTV1" tvg-logo="https://thumb.vtvdigital.org/transform?url=https://vtvgo-images.vtvdigital.vn/prod/images/channel/20260905/2026090510/df56581896-vtv1.webp" group-title="VTV",VTV1 (1920x1080 - 3317kbps - Akamai CDN)
-https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv1/master.m3u8
+https://vtvgolivepre-vtv02.vtvdigital.vn/hls/vtv/live/vtv1__vtv1080p-h264/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv2" tvg-name="VTV2" tvg-logo="https://thumb.vtvdigital.org/transform?url=https://vtvgo-images.vtvdigital.vn/prod/images/channel/20260905/2026090510/ed6bfd7f53-vtv2.webp" group-title="VTV",VTV2 (1920x1080 - 3334kbps - Akamai CDN)
-https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv2/master.m3u8
+https://vtvgolivepre-vtv02.vtvdigital.vn/hls/vtv/live/vtv2__vtv1080p-h264/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv3" tvg-name="VTV3" tvg-logo="https://thumb.vtvdigital.org/transform?url=https://vtvgo-images.vtvdigital.vn/prod/images/channel/20260905/2026090510/c725fae9ac-vtv3.webp" group-title="VTV",VTV3 (1920x1080 - 3384kbps - Akamai CDN)
-https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv3/master.m3u8
+https://vtvgolivepre-vtv02.vtvdigital.vn/hls/vtv/live/vtv3__vtv1080p-h264/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv4" tvg-name="VTV4" tvg-logo="https://thumb.vtvdigital.org/transform?url=https://vtvgo-images.vtvdigital.vn/prod/images/channel/20260905/2026090510/c08cf70a49-vtv4.webp" group-title="VTV",VTV4 (1920x1080 - 3378kbps - Akamai CDN)
-https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv4/master.m3u8
+https://vtvgolivepre-vtv02.vtvdigital.vn/hls/vtv/live/vtv4__vtv1080p-h264/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv5" tvg-name="VTV5" tvg-logo="https://thumb.vtvdigital.org/transform?url=https://vtvgo-images.vtvdigital.vn/prod/images/channel/20260905/2026090510/fdf2557ea9-vtv5.webp" group-title="VTV",VTV5 (1920x1080 - 3338kbps - Akamai CDN)
-https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv5tn/master.m3u8
+https://vtvgolivepre-vtv02.vtvdigital.vn/hls/vtv/live/vtv5tn__vtv1080p-h264/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv10" tvg-name="VTV10" tvg-logo="https://thumb.vtvdigital.org/transform?url=https://vtvgo-images.vtvdigital.vn/prod/images/channel/20260905/2026090510/13687e4caf-vtv10.webp" group-title="VTV",VTV10 (1920x1080 - 3400kbps - Akamai CDN)
-https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv6/master.m3u8
+https://vtvgolivepre-vtv02.vtvdigital.vn/hls/vtv/live/vtv6__vtv1080p-h264/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv5taynambo" tvg-name="VTV5 Tây Nam Bộ" tvg-logo="https://thumb.vtvdigital.org/transform?url=https://vtvgo-images.vtvdigital.vn/prod/images/channel/20260905/2026090510/eeb81bb42b-vtv5-ta-y-nam-bo.webp" group-title="VTV",VTV5 Tây Nam Bộ (1920x1080 - 3354kbps - Akamai CDN)
-https://vtvgolive-sctvdrm.vtvdigital.vn/manifest/vtv5tnb/master.m3u8
+https://vtvgolivepre-vtv02.vtvdigital.vn/hls/vtv/live/vtv5tnb__vtv1080p-h264/index.m3u8
